@@ -242,4 +242,9 @@ export const defaultComponentProps: Record<ComponentType, ComponentProps> = {
       slots: [],
     },
   },
+  custom: {
+    type: 'custom',
+    componentName: '',
+    props: {},
+  },
 };
