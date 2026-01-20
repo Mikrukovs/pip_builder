@@ -37,9 +37,17 @@ jobs:
 
       - name: List output directory
         run: |
+          echo "Current directory:"
           pwd
+          echo "Directory contents:"
           ls -la
-          ls -la out || echo "out directory not found"
+          echo "Out directory contents:"
+          if [ -d "out" ]; then
+            ls -la out
+          else
+            echo "ERROR: out directory does not exist!"
+            exit 1
+          fi
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
@@ -47,7 +55,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: out
+          path: ${{ github.workspace }}/out
 
   deploy:
     environment:
