@@ -1,0 +1,85 @@
+{
+  "name": "FaqAccordion",
+  "displayName": "FAQ Аккордеон",
+  "category": "custom",
+  "icon": "❓",
+  "description": "Список часто задаваемых вопросов с раскрывающимися ответами",
+  
+  "template": {
+    "type": "container",
+    "style": { 
+      "borderRadius": 12, 
+      "overflow": "hidden",
+      "border": "1px solid #e5e7eb"
+    },
+    "children": [
+      {
+        "type": "list",
+        "dataKey": "items",
+        "itemTemplate": {
+          "type": "container",
+          "style": { "borderBottom": "1px solid #e5e7eb" },
+          "gestures": ["TAP"],
+          "children": [
+            {
+              "type": "container",
+              "style": { 
+                "padding": 16, 
+                "flexDirection": "row", 
+                "justifyContent": "space-between",
+                "alignItems": "center"
+              },
+              "children": [
+                { 
+                  "type": "text", 
+                  "prop": "item.question", 
+                  "style": { "fontWeight": 600, "fontSize": 14 } 
+                }
+              ]
+            },
+            {
+              "type": "container",
+              "style": { "padding": 16, "paddingTop": 0 },
+              "children": [
+                { 
+                  "type": "text", 
+                  "prop": "item.answer", 
+                  "style": { "color": "#666", "fontSize": 14 } 
+                }
+              ]
+            }
+          ]
+        }
+      }
+    ]
+  },
+  
+  "defaultProps": {
+    "items": [
+      { 
+        "question": "Как оформить заказ?", 
+        "answer": "Выберите товар, добавьте в корзину и оформите заказ в личном кабинете." 
+      },
+      { 
+        "question": "Какие способы оплаты?", 
+        "answer": "Мы принимаем банковские карты, Apple Pay, Google Pay и оплату при получении." 
+      },
+      { 
+        "question": "Как отследить заказ?", 
+        "answer": "В личном кабинете в разделе \"Мои заказы\" вы найдёте трек-номер для отслеживания." 
+      }
+    ]
+  },
+  
+  "settings": [
+    {
+      "key": "items",
+      "label": "Вопросы и ответы",
+      "type": "items",
+      "itemFields": [
+        { "key": "question", "label": "Вопрос", "type": "text" },
+        { "key": "answer", "label": "Ответ", "type": "textarea" }
+      ]
+    }
+  ]
+}

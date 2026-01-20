@@ -1,0 +1,135 @@
+{
+  "name": "CardsCarousel",
+  "displayName": "Карусель карточек",
+  "category": "custom",
+  "icon": "🎠",
+  "description": "Горизонтальная карусель карточек с фото, заголовком и подзаголовком",
+
+  "template": {
+    "type": "list",
+    "dataKey": "cards",
+    "style": {
+      "display": "flex",
+      "flexDirection": "row",
+      "overflowX": "auto",
+      "overflowY": "hidden",
+      "gap": 12,
+      "padding": 8,
+      "scrollSnapType": "x mandatory",
+      "WebkitOverflowScrolling": "touch",
+      "scrollbarWidth": "none"
+    },
+    "itemTemplate": {
+      "type": "container",
+      "style": {
+        "width": 260,
+        "minWidth": 260,
+        "flexShrink": 0,
+        "borderRadius": 12,
+        "background": "#ffffff",
+        "boxShadow": "0 2px 8px rgba(0,0,0,0.1)",
+        "overflow": "hidden",
+        "scrollSnapAlign": "start"
+      },
+      "children": [
+        {
+          "type": "image",
+          "prop": "item.image",
+          "style": {
+            "width": "100%",
+            "height": 160,
+            "objectFit": "cover"
+          }
+        },
+        {
+          "type": "container",
+          "style": {
+            "padding": 12
+          },
+          "children": [
+            {
+              "type": "heading",
+              "prop": "item.title",
+              "style": {
+                "fontSize": 16,
+                "fontWeight": 600,
+                "marginBottom": 4,
+                "color": "#000000"
+              }
+            },
+            {
+              "type": "text",
+              "prop": "item.subtitle",
+              "style": {
+                "fontSize": 13,
+                "color": "#666666",
+                "lineHeight": 1.4
+              }
+            }
+          ]
+        }
+      ]
+    }
+  },
+
+  "defaultProps": {
+    "cards": [
+      {
+        "image": "",
+        "title": "Заголовок 1",
+        "subtitle": "Подзаголовок первой карточки"
+      },
+      {
+        "image": "",
+        "title": "Заголовок 2",
+        "subtitle": "Подзаголовок второй карточки"
+      },
+      {
+        "image": "",
+        "title": "Заголовок 3",
+        "subtitle": "Подзаголовок третьей карточки"
+      }
+    ]
+  },
+
+  "settings": [
+    {
+      "key": "cards",
+      "label": "Карточки",
+      "type": "items",
+      "itemFields": [
+        { "key": "image", "label": "Фото", "type": "image" },
+        { "key": "title", "label": "Заголовок", "type": "text" },
+        { "key": "subtitle", "label": "Подзаголовок", "type": "text" }
+      ]
+    }
+  ],
+
+  "behavior": {
+    "type": "state-machine",
+    "initial": "idle",
+    "context": {
+      "currentIndex": 0
+    },
+    "states": {
+      "idle": {
+        "on": {
+          "SWIPE_LEFT": {
+            "target": "idle",
+            "actions": [
+              { "type": "increment", "key": "currentIndex", "by": 1 },
+              { "type": "haptic", "hapticType": "light" }
+            ]
+          },
+          "SWIPE_RIGHT": {
+            "target": "idle",
+            "actions": [
+              { "type": "decrement", "key": "currentIndex", "by": 1 },
+              { "type": "haptic", "hapticType": "light" }
+            ]
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,64 @@
+{
+  "name": "ProductCard",
+  "displayName": "Карточка товара",
+  "category": "custom",
+  "icon": "🛍️",
+  "description": "Карточка с изображением, названием, ценой и кнопкой покупки",
+  
+  "template": {
+    "type": "container",
+    "style": { 
+      "borderRadius": 12, 
+      "overflow": "hidden",
+      "background": "#ffffff",
+      "boxShadow": "0 2px 8px rgba(0,0,0,0.1)"
+    },
+    "children": [
+      { 
+        "type": "image", 
+        "prop": "image", 
+        "style": { "aspectRatio": "4/3" } 
+      },
+      {
+        "type": "container",
+        "style": { "padding": 16 },
+        "children": [
+          { 
+            "type": "heading", 
+            "prop": "title", 
+            "style": { "fontSize": 16 } 
+          },
+          { 
+            "type": "text", 
+            "prop": "price", 
+            "style": { "color": "#007AFF", "fontWeight": 600 } 
+          },
+          { "type": "spacer", "height": 12 },
+          { 
+            "type": "button", 
+            "prop": "buttonLabel", 
+            "variant": "primary",
+            "action": "navigate",
+            "target": "prop:targetScreen"
+          }
+        ]
+      }
+    ]
+  },
+  
+  "defaultProps": {
+    "image": "",
+    "title": "Название товара",
+    "price": "1 990 ₽",
+    "buttonLabel": "Купить",
+    "targetScreen": null
+  },
+  
+  "settings": [
+    { "key": "image", "label": "Изображение", "type": "image" },
+    { "key": "title", "label": "Название", "type": "text" },
+    { "key": "price", "label": "Цена", "type": "text" },
+    { "key": "buttonLabel", "label": "Текст кнопки", "type": "text" },
+    { "key": "targetScreen", "label": "Переход по кнопке", "type": "screen" }
+  ]
+}
