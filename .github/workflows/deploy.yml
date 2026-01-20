@@ -32,9 +32,11 @@ jobs:
 
       - name: Build
         run: |
-          npm run build
+          NODE_ENV=production npm run build
           echo "Build completed. Checking for out directory..."
           ls -la
+        env:
+          NODE_ENV: production
 
       - name: List output directory
         run: |
