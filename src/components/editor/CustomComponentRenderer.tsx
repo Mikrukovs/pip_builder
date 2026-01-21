@@ -617,7 +617,7 @@ export function CustomComponentRenderer({
           }
         }
         const iconSvg = ICONS[iconName];
-        const iconSize = element.size || 24;
+        const iconSize = typeof element.size === 'number' ? element.size : 24;
         
         if (!iconSvg) {
           return (

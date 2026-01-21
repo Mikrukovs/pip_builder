@@ -78,7 +78,7 @@ export interface TemplateElement {
   
   // Для button
   variant?: 'primary' | 'secondary' | 'destructive';
-  size?: 's' | 'm' | 'l';
+  size?: 's' | 'm' | 'l' | number; // Для button: 's'|'m'|'l', для icon: число в пикселях
   action?: 'navigate';
   target?: string; // "prop:targetScreen" или screenId
   
@@ -95,7 +95,6 @@ export interface TemplateElement {
   
   // Для icon
   name?: string; // Название иконки: more, close, chevron-down, check и др.
-  size?: number; // Размер иконки в пикселях (по умолчанию 24)
   rotation?: string; // Поворот: число или "context:ключ"
   
   // Интерактивность
