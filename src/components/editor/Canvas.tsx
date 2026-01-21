@@ -276,12 +276,6 @@ export function Canvas() {
                 Свойства скопированы
               </div>
             )}
-            <button
-              onClick={addSlot}
-              className="px-3 py-1.5 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              + Добавить слот
-            </button>
           </div>
         </div>
 
@@ -298,7 +292,7 @@ export function Canvas() {
             <div
               key={screen.id}
               className={`
-                group flex items-center gap-1 px-3 py-1.5 rounded-lg border transition-colors cursor-pointer min-w-fit
+                group flex items-center gap-1 px-3 py-1.5 rounded-lg border transition-colors cursor-pointer whitespace-nowrap
                 ${currentScreenId === screen.id
                   ? 'border-blue-500 bg-blue-50 text-blue-700'
                   : 'border-gray-200 hover:border-gray-300 text-gray-600'
@@ -334,7 +328,7 @@ export function Canvas() {
                         e.stopPropagation();
                         removeScreen(screen.id);
                       }}
-                      className="ml-1 p-0.5 rounded opacity-0 group-hover:opacity-100 hover:bg-gray-200 transition-all"
+                      className="p-0.5 rounded opacity-0 group-hover:opacity-100 hover:bg-gray-200 transition-all"
                     >
                       <svg className="w-3 h-3 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -349,7 +343,7 @@ export function Canvas() {
           <button
             onClick={() => addScreen()}
             className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-dashed border-gray-300 
-                       text-gray-500 hover:border-blue-500 hover:text-blue-600 transition-colors"
+                       text-gray-500 hover:border-blue-500 hover:text-blue-600 transition-colors whitespace-nowrap"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -451,6 +445,18 @@ export function Canvas() {
                   </div>
                 </div>
               ))}
+              
+              {/* Кнопка добавления слота */}
+              <button
+                onClick={addSlot}
+                className="w-full border-2 border-dashed border-gray-300 rounded-lg p-3 text-center text-gray-400 
+                           hover:border-blue-400 hover:text-blue-600 cursor-pointer transition-colors flex items-center justify-center gap-2"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+                <span className="text-sm">Добавить слот</span>
+              </button>
             </div>
 
             {/* Sticky Section */}
