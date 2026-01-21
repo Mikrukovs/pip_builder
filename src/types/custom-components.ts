@@ -9,6 +9,7 @@ export type TemplateElementType =
   | 'image' 
   | 'button' 
   | 'input' 
+  | 'cell'
   | 'spacer'
   | 'list'
   | 'stack'
@@ -79,11 +80,39 @@ export interface TemplateElement {
   // Для button
   variant?: 'primary' | 'secondary' | 'destructive';
   size?: 's' | 'm' | 'l' | number; // Для button: 's'|'m'|'l', для icon: число в пикселях
-  action?: 'navigate';
+  action?: 'navigate' | 'none' | 'back';
   target?: string; // "prop:targetScreen" или screenId
+  requireValidation?: boolean;
   
   // Для input
   placeholder?: string;
+  label?: string;
+  showLabel?: boolean;
+  inputVariant?: 'default' | 'search' | 'dropdown' | 'password';
+  inputType?: 'text' | 'numeric';
+  descriptor?: string;
+  dropdownOptions?: { id: string; label: string }[];
+  validation?: {
+    enabled: boolean;
+    type: 'exact' | 'range';
+    exactValue?: string;
+    min?: number | null;
+    max?: number | null;
+    errorMessage?: string;
+    successMessage?: string;
+  };
+  
+  // Для cell
+  cellType?: 'basic' | 'navigation' | 'toggle' | 'checkbox' | 'radio' | 'info' | 'icon';
+  title?: string; // или prop
+  subtitle?: string;
+  showSubtitle?: boolean;
+  subtitlePosition?: 'top' | 'bottom';
+  showIcon?: boolean;
+  icon?: string; // base64/URL или "prop:iconKey"
+  rightIcon?: string;
+  infoValue?: string;
+  radioGroup?: string;
   
   // Для spacer
   height?: number;

@@ -10,6 +10,8 @@ import {
   EventType,
   DropdownItem
 } from '@/types/custom-components';
+import { Cell, Button, Input } from '@/components/ui-kit';
+import { CellProps, ButtonProps, InputProps } from '@/types';
 
 // Встроенные SVG иконки
 const ICONS: Record<string, React.ReactNode> = {
@@ -486,58 +488,98 @@ export function CustomComponentRenderer({
         );
 
       case 'button':
-        const buttonVariant = element.variant || 'primary';
-        const buttonSize = element.size || 'm';
-        
-        const variantStyles: Record<string, string> = {
-          primary: 'bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800',
-          secondary: 'bg-gray-100 text-gray-900 hover:bg-gray-200 active:bg-gray-300 border border-gray-300',
-          destructive: 'bg-red-600 text-white hover:bg-red-700 active:bg-red-800',
-        };
-        
-        const sizeStyles: Record<string, string> = {
-          s: 'px-3 py-1.5 text-sm',
-          m: 'px-4 py-2 text-base',
-          l: 'px-6 py-3 text-lg',
+        // Собираем конфиг для нативного Button
+        const buttonConfig: ButtonProps = {
+          type: 'button',
+          label: String(propValue || element.title || 'Кнопка'),
+          variant: element.variant || 'primary',
+          size: (typeof element.size === 'string' ? element.size : 'm') as 's' | 'm' | 'l',
+          action: element.action === 'navigate' ? 'navigate' : 'none',
+          targetScreenId: element.target?.startsWith('prop:')
+            ? (renderContext.props[element.target.slice(5)] as string) || null
+            : element.target || null,
+          requireValidation: element.requireValidation,
         };
         
         return (
-          <button
-            key={key}
-            type="button"
-            onClick={() => {
-              if (preview && element.action === 'navigate' && element.target && onNavigate) {
-                const targetScreen = element.target.startsWith('prop:')
-                  ? (renderContext.props[element.target.slice(5)] as string)
-                  : element.target;
-                if (targetScreen) {
-                  onNavigate(targetScreen);
-                }
-              }
-              handleEvent('TAP');
-            }}
-            className={`
-              w-full font-medium rounded-lg transition-colors duration-150 
-              focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500
-              ${variantStyles[buttonVariant] || variantStyles.primary}
-              ${sizeStyles[buttonSize] || sizeStyles.m}
-            `}
-            style={style}
-          >
-            {String(propValue || 'Кнопка')}
-          </button>
+          <div key={key} style={style} onClick={() => handleEvent('TAP')}>
+            <Button 
+              config={buttonConfig} 
+              preview={preview} 
+              onNavigate={onNavigate || (() => {})}
+            />
+          </div>
         );
 
       case 'input':
+        // Собираем конфиг для нативного Input
+        const inputConfig: InputProps = {
+          type: 'input',
+          inputVariant: element.inputVariant || 'default',
+          placeholder: element.placeholder || String(propValue || ''),
+          label: element.label || '',
+          showLabel: element.showLabel ?? false,
+          inputType: element.inputType || 'text',
+          descriptor: element.descriptor || '',
+          dropdownOptions: element.dropdownOptions || [],
+          validation: {
+            enabled: element.validation?.enabled ?? false,
+            type: element.validation?.type ?? 'exact',
+            exactValue: element.validation?.exactValue ?? '',
+            min: element.validation?.min ?? null,
+            max: element.validation?.max ?? null,
+            errorMessage: element.validation?.errorMessage ?? '',
+            successMessage: element.validation?.successMessage ?? '',
+          },
+        };
+        
         return (
-          <input
-            key={key}
-            type="text"
-            placeholder={element.placeholder || String(propValue || '')}
-            className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 focus:outline-none transition-colors"
-            style={style}
-            readOnly={!preview}
-          />
+          <div key={key} style={style}>
+            <Input config={inputConfig} preview={preview} />
+          </div>
+        );
+
+      case 'cell':
+        // Собираем конфиг для нативного Cell
+        const cellTitle = element.title 
+          ? (element.title.startsWith('prop:') ? String(getValue(element.title, renderContext) || '') : element.title)
+          : String(propValue || '');
+        const cellSubtitle = element.subtitle
+          ? (element.subtitle.startsWith('prop:') ? String(getValue(element.subtitle, renderContext) || '') : element.subtitle)
+          : '';
+        const cellIcon = element.icon
+          ? (element.icon.startsWith('prop:') ? String(getValue(element.icon, renderContext) || '') : element.icon)
+          : '';
+        const cellRightIcon = element.rightIcon
+          ? (element.rightIcon.startsWith('prop:') ? String(getValue(element.rightIcon, renderContext) || '') : element.rightIcon)
+          : '';
+          
+        const cellConfig: CellProps = {
+          type: 'cell',
+          cellType: element.cellType || 'basic',
+          title: cellTitle,
+          subtitle: cellSubtitle,
+          showSubtitle: element.showSubtitle ?? !!cellSubtitle,
+          subtitlePosition: element.subtitlePosition || 'bottom',
+          showIcon: element.showIcon ?? !!cellIcon,
+          icon: cellIcon,
+          rightIcon: cellRightIcon,
+          action: element.action === 'navigate' ? 'navigate' : 'none',
+          targetScreenId: element.target?.startsWith('prop:')
+            ? (renderContext.props[element.target.slice(5)] as string) || null
+            : element.target || null,
+          infoValue: element.infoValue || '',
+          radioGroup: element.radioGroup || '',
+        };
+        
+        return (
+          <div key={key} style={style} onClick={() => handleEvent('TAP')}>
+            <Cell 
+              config={cellConfig} 
+              preview={preview} 
+              onNavigate={onNavigate || (() => {})}
+            />
+          </div>
         );
 
       case 'spacer':

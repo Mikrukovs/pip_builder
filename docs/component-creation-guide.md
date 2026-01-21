@@ -61,11 +61,27 @@ Template описывает визуальную структуру. Досту�
 | `text` | Текст | `prop`, `style` |
 | `image` | Изображение | `prop`, `style` |
 | `icon` | Иконка | `name`, `size`, `rotation`, `style` |
-| `button` | Кнопка | `prop`, `variant`, `size`, `style` |
-| `input` | Поле ввода | `prop`, `inputVariant`, `placeholder`, `style` |
-| `cell` | Ячейка списка | `prop`, `cellType`, `style` |
+| `button` | Кнопка (нативная) | `prop`, `variant`, `size`, `action`, `target`, `requireValidation`, `style` |
+| `input` | Поле ввода (нативное) | `placeholder`, `label`, `inputVariant`, `inputType`, `validation`, `style` |
+| `cell` | Ячейка (нативная) | `cellType`, `title`, `subtitle`, `icon`, `rightIcon`, `action`, `target`, `style` |
 | `spacer` | Отступ | `height` |
 | `list` | Список элементов | `dataKey`, `itemTemplate`, `style` |
+
+**Нативные компоненты** (`button`, `input`, `cell`) поддерживают все свойства как в редакторе. Пример cell:
+
+```json
+{
+  "type": "cell",
+  "cellType": "navigation",
+  "title": "prop:itemTitle",
+  "subtitle": "prop:itemSubtitle",
+  "showSubtitle": true,
+  "icon": "prop:itemIcon",
+  "showIcon": true,
+  "action": "navigate",
+  "target": "prop:targetScreen"
+}
+```
 
 ### Пример template
 
