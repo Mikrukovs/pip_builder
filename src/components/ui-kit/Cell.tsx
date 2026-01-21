@@ -1,7 +1,7 @@
 'use client';
 
 import { CellProps } from '@/types';
-import { useState } from 'react';
+import { useState, useId } from 'react';
 
 interface Props {
   config: CellProps;
@@ -12,7 +12,7 @@ interface Props {
 export function Cell({ config, preview, onNavigate }: Props) {
   const [isToggled, setIsToggled] = useState(false);
   const [isChecked, setIsChecked] = useState(false);
-  const [isRadioSelected, setIsRadioSelected] = useState(false);
+  const radioId = useId();
 
   const renderIcon = () => {
     if (!config.icon) {
@@ -106,21 +106,18 @@ export function Cell({ config, preview, onNavigate }: Props) {
 
       case 'radio':
         return (
-          <button
-            type="button"
-            onClick={() => {
-              if (preview) setIsRadioSelected(!isRadioSelected);
-            }}
-            className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors flex-shrink-0 ${
-              isRadioSelected 
-                ? 'border-blue-600' 
-                : 'border-gray-300'
-            }`}
-          >
-            {isRadioSelected && (
-              <div className="w-3 h-3 rounded-full bg-blue-600" />
-            )}
-          </button>
+          <label className="relative w-6 h-6 flex-shrink-0 cursor-pointer">
+            <input
+              type="radio"
+              name={config.radioGroup || 'default'}
+              id={radioId}
+              disabled={!preview}
+              className="peer sr-only"
+            />
+            <div className="w-6 h-6 rounded-full border-2 border-gray-300 flex items-center justify-center transition-colors peer-checked:border-blue-600">
+              <div className="w-3 h-3 rounded-full bg-blue-600 scale-0 transition-transform peer-checked:scale-100" />
+            </div>
+          </label>
         );
 
       case 'info':
@@ -160,20 +157,39 @@ export function Cell({ config, preview, onNavigate }: Props) {
       setIsToggled(!isToggled);
     } else if (config.cellType === 'checkbox') {
       setIsChecked(!isChecked);
-    } else if (config.cellType === 'radio') {
-      setIsRadioSelected(!isRadioSelected);
     }
+    // Radio обрабатывается нативно через input type="radio"
   };
 
   const isClickable = preview && (
     config.cellType === 'navigation' || 
     config.cellType === 'toggle' || 
-    config.cellType === 'checkbox' || 
-    config.cellType === 'radio'
+    config.cellType === 'checkbox'
   );
+  
+  // Radio кликабельна, но через label, а не через div
+  const isRadioClickable = preview && config.cellType === 'radio';
 
   // Проверяем showIcon (для обратной совместимости, если undefined - показываем)
   const shouldShowIcon = config.showIcon !== false;
+
+  // Для radio делаем всю ячейку label
+  if (config.cellType === 'radio') {
+    return (
+      <label 
+        htmlFor={radioId}
+        className={`flex items-center gap-3 p-3 bg-white rounded-xl border border-gray-200 transition-colors ${
+          isRadioClickable ? 'cursor-pointer hover:border-gray-300 active:bg-gray-50' : ''
+        }`}
+      >
+        {shouldShowIcon && renderIcon()}
+        <div className="flex flex-col flex-1 min-w-0">
+          {renderContent()}
+        </div>
+        {renderRightControl()}
+      </label>
+    );
+  }
 
   return (
     <div 
