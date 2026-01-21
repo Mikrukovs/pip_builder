@@ -3,62 +3,222 @@
   "displayName": "Карточка товара",
   "category": "custom",
   "icon": "🛍️",
-  "description": "Карточка с изображением, названием, ценой и кнопкой покупки",
+  "description": "Карточка товара с изображением, заголовком, подзаголовком, меню действий и кнопкой покупки",
   
   "template": {
     "type": "container",
     "style": { 
+      "padding": 16, 
       "borderRadius": 12, 
-      "overflow": "hidden",
       "background": "#ffffff",
       "boxShadow": "0 2px 8px rgba(0,0,0,0.1)"
     },
     "children": [
       { 
         "type": "image", 
-        "prop": "image", 
-        "style": { "aspectRatio": "4/3" } 
+        "prop": "productImage",
+        "style": { 
+          "borderRadius": 8, 
+          "aspectRatio": "16/9",
+          "objectFit": "cover",
+          "width": "100%"
+        }
       },
+      { "type": "spacer", "height": 12 },
       {
         "type": "container",
-        "style": { "padding": 16 },
+        "style": {
+          "display": "flex",
+          "flexDirection": "row",
+          "justifyContent": "space-between",
+          "alignItems": "flex-start",
+          "gap": 8
+        },
         "children": [
-          { 
-            "type": "heading", 
-            "prop": "title", 
-            "style": { "fontSize": 16 } 
+          {
+            "type": "container",
+            "style": { 
+              "flex": 1,
+              "minWidth": 0
+            },
+            "children": [
+              { 
+                "type": "heading", 
+                "prop": "title",
+                "style": { 
+                  "fontSize": 18, 
+                  "fontWeight": 600, 
+                  "marginBottom": 4,
+                  "lineHeight": 1.2
+                }
+              },
+              { 
+                "type": "text", 
+                "prop": "subtitle",
+                "style": { 
+                  "color": "#666", 
+                  "fontSize": 14,
+                  "lineHeight": 1.4
+                }
+              }
+            ]
           },
-          { 
-            "type": "text", 
-            "prop": "price", 
-            "style": { "color": "#007AFF", "fontWeight": 600 } 
-          },
-          { "type": "spacer", "height": 12 },
-          { 
-            "type": "button", 
-            "prop": "buttonLabel", 
-            "variant": "primary",
-            "action": "navigate",
-            "target": "prop:targetScreen"
+          {
+            "type": "container",
+            "style": {
+              "padding": 4,
+              "borderRadius": 4,
+              "alignSelf": "flex-start"
+            },
+            "children": [
+              {
+                "type": "icon",
+                "name": "more",
+                "size": 24,
+                "style": { 
+                  "color": "#666"
+                },
+                "gestures": ["TAP"]
+              }
+            ]
           }
         ]
+      },
+      { "type": "spacer", "height": 16 },
+      { 
+        "type": "button", 
+        "prop": "buyButtonLabel",
+        "variant": "primary",
+        "size": "m",
+        "style": { "width": "100%" },
+        "action": "navigate",
+        "target": "prop:targetScreen"
       }
     ]
   },
   
   "defaultProps": {
-    "image": "",
+    "productImage": "",
     "title": "Название товара",
-    "price": "1 990 ₽",
-    "buttonLabel": "Купить",
-    "targetScreen": null
+    "subtitle": "Описание товара",
+    "buyButtonLabel": "Купить",
+    "targetScreen": null,
+    "menuTitle": "Действия",
+    "shareLabel": "Поделиться",
+    "favoriteLabel": "В избранное",
+    "deleteLabel": "Удалить"
   },
   
   "settings": [
-    { "key": "image", "label": "Изображение", "type": "image" },
-    { "key": "title", "label": "Название", "type": "text" },
-    { "key": "price", "label": "Цена", "type": "text" },
-    { "key": "buttonLabel", "label": "Текст кнопки", "type": "text" },
-    { "key": "targetScreen", "label": "Переход по кнопке", "type": "screen" }
-  ]
+    { 
+      "key": "productImage", 
+      "label": "Изображение товара", 
+      "type": "image"
+    },
+    { 
+      "key": "title", 
+      "label": "Название товара", 
+      "type": "text",
+      "placeholder": "Введите название"
+    },
+    { 
+      "key": "subtitle", 
+      "label": "Описание товара", 
+      "type": "textarea",
+      "placeholder": "Введите описание"
+    },
+    { 
+      "key": "buyButtonLabel", 
+      "label": "Текст кнопки", 
+      "type": "text",
+      "placeholder": "Купить"
+    },
+    { 
+      "key": "targetScreen", 
+      "label": "Переход при покупке", 
+      "type": "screen"
+    },
+    { 
+      "key": "menuTitle", 
+      "label": "Заголовок меню", 
+      "type": "text",
+      "placeholder": "Действия"
+    },
+    { 
+      "key": "shareLabel", 
+      "label": "Текст 'Поделиться'", 
+      "type": "text",
+      "placeholder": "Поделиться"
+    },
+    { 
+      "key": "favoriteLabel", 
+      "label": "Текст 'В избранное'", 
+      "type": "text",
+      "placeholder": "В избранное"
+    },
+    { 
+      "key": "deleteLabel", 
+      "label": "Текст 'Удалить'", 
+      "type": "text",
+      "placeholder": "Удалить"
+    }
+  ],
+  
+  "behavior": {
+    "type": "state-machine",
+    "initial": "idle",
+    "context": {},
+    "states": {
+      "idle": {
+        "on": {
+          "TAP": {
+            "target": "showingMenu",
+            "actions": [
+              {
+                "type": "openSheet",
+                "sheetTitle": "prop:menuTitle",
+                "sheetContent": {
+                  "type": "container",
+                  "style": { "gap": 8, "padding": 16 },
+                  "children": [
+                    {
+                      "type": "button",
+                      "prop": "shareLabel",
+                      "variant": "secondary",
+                      "size": "m",
+                      "style": { "width": "100%" }
+                    },
+                    {
+                      "type": "button",
+                      "prop": "favoriteLabel",
+                      "variant": "secondary",
+                      "size": "m",
+                      "style": { "width": "100%" }
+                    },
+                    {
+                      "type": "button",
+                      "prop": "deleteLabel",
+                      "variant": "destructive",
+                      "size": "m",
+                      "style": { "width": "100%" }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      },
+      "showingMenu": {
+        "on": {
+          "TAP": {
+            "target": "idle",
+            "actions": [
+              { "type": "closeSheet" }
+            ]
+          }
+        }
+      }
+    }
+  }
 }
