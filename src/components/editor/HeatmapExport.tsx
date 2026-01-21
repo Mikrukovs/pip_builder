@@ -171,7 +171,7 @@ export function HeatmapExport({ analytics, screen, screenName, onClose, embedded
           <div 
             ref={containerRef}
             className="relative bg-white rounded-xl overflow-hidden shadow-lg mx-auto flex flex-col"
-            style={{ width: PREVIEW_WIDTH, minHeight: 580 }}
+            style={{ width: PREVIEW_WIDTH, height: 812 }} // Высота iPhone X/11/12
           >
             {/* Зона: Навбар */}
             {hasNavbar && navbarSlot?.component && (
@@ -199,7 +199,7 @@ export function HeatmapExport({ analytics, screen, screenName, onClose, embedded
             {/* Зона: Основной контент - структура должна совпадать с preview */}
             <div 
               ref={contentRef} 
-              className="relative px-4 py-6 space-y-4"
+              className="relative px-4 py-6 space-y-4 flex-1 overflow-hidden"
             >
               {otherSlots.map((slot: Slot) => (
                 slot.component && (
@@ -224,9 +224,9 @@ export function HeatmapExport({ analytics, screen, screenName, onClose, embedded
               )}
             </div>
 
-            {/* Зона: Sticky секция */}
+            {/* Зона: Sticky секция - прижата к низу */}
             {hasStickyContent && (
-              <div ref={stickyRef} className="relative border-t border-gray-200 bg-white px-4 py-3 space-y-2 flex-shrink-0">
+              <div ref={stickyRef} className="relative border-t border-gray-200 bg-white px-4 py-3 space-y-2 flex-shrink-0 mt-auto">
                 <div style={{ opacity: interfaceOpacity }} className="space-y-2">
                   {screen.stickySlots!.map((slot: Slot) => (
                     slot.component && (
