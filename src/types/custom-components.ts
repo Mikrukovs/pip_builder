@@ -94,8 +94,9 @@ export interface TemplateElement {
   itemTemplate?: TemplateElement;
   
   // Для icon
-  name?: string;
-  rotation?: string; // "context:isOpen ? 180 : 0"
+  name?: string; // Название иконки: more, close, chevron-down, check и др.
+  size?: number; // Размер иконки в пикселях (по умолчанию 24)
+  rotation?: string; // Поворот: число или "context:ключ"
   
   // Интерактивность
   gestures?: ('TAP' | 'LONG_PRESS' | 'SWIPE_LEFT' | 'SWIPE_RIGHT' | 'SWIPE_UP' | 'SWIPE_DOWN')[];
