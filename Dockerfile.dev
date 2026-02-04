@@ -10,16 +10,13 @@ RUN apk add --no-cache libc6-compat openssl python3 make g++
 # Копируем package файлы
 COPY package*.json ./
 
-# Копируем схему Prisma
+# Копируем схему Prisma ПЕРЕД установкой
 COPY prisma ./prisma/
 
-# Устанавливаем зависимости БЕЗ postinstall
-RUN npm ci --ignore-scripts
+# Устанавливаем зависимости (с postinstall для native модулей)
+RUN npm ci
 
-# Генерируем Prisma Client
-RUN npx prisma generate
-
-# Копируем остальные файлы (они будут перезаписаны volume mount)
+# Копируем остальные файлы проекта
 COPY . .
 
 # Открываем порт
