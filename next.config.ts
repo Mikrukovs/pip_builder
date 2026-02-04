@@ -9,6 +9,16 @@ const nextConfig: NextConfig = {
   trailingSlash: true,
   images: {
     unoptimized: true,
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 't.me',
+      },
+      {
+        protocol: 'https',
+        hostname: 'api.telegram.org',
+      },
+    ],
   },
 };
 

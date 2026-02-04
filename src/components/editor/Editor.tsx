@@ -2,11 +2,13 @@
 
 import { useEditorStore, useHydration } from '@/store/editor';
 import { useCustomComponentsStore } from '@/store/custom-components';
+import { useAuthStore } from '@/store/auth';
 import { Canvas } from './Canvas';
 import { ComponentPicker } from './ComponentPicker';
 import { SettingsPanel } from './SettingsPanel';
 import { ImportComponentModal } from './ImportComponentModal';
 import { AnalyticsPanel } from './AnalyticsPanel';
+import { TelegramLogin, UserProfile } from '@/components/auth';
 import { useState, useEffect } from 'react';
 import { Project } from '@/types';
 
@@ -36,6 +38,9 @@ export function Editor() {
   
   // Хук для кастомных компонентов - должен быть до условных return
   const { components: customComponents } = useCustomComponentsStore();
+  
+  // Авторизация
+  const { isAuthenticated } = useAuthStore();
 
   // Создаём проект при первом запуске, если его нет (только после гидратации)
   useEffect(() => {
@@ -109,7 +114,17 @@ export function Editor() {
           <span className="font-semibold text-gray-900">Prototype Builder</span>
         </div>
         
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
+          {/* Авторизация через Telegram */}
+          {isAuthenticated ? (
+            <UserProfile />
+          ) : (
+            <TelegramLogin botName={process.env.NEXT_PUBLIC_TELEGRAM_BOT_NAME || ''} />
+          )}
+          
+          <div className="h-6 w-px bg-gray-200" />
+          
+          <div className="flex items-center gap-2">
           <button
             onClick={() => setShowImportModal(true)}
             className="px-3 py-1.5 text-sm text-purple-600 hover:bg-purple-50 rounded-lg transition-colors flex items-center gap-1.5"
@@ -147,6 +162,7 @@ export function Editor() {
             </svg>
             Поделиться
           </button>
+          </div>
         </div>
       </div>
 

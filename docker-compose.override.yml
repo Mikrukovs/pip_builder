@@ -1,0 +1,9 @@
+# Override для локальной разработки
+# Этот файл автоматически применяется с docker-compose.yml
+
+version: '3.8'
+
+services:
+  app-dev:
+    profiles:
+      - ""  # Активирует dev по умолчанию

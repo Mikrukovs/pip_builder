@@ -1,36 +1,109 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Prototype Builder
 
-## Getting Started
+Конструктор веб-прототипов с авторизацией через Telegram.
 
-First, run the development server:
+## ✨ Возможности
+
+- 🎨 Визуальный редактор компонентов
+- 📱 Адаптивный дизайн
+- 🔐 Авторизация через Telegram (имя + аватарка)
+- 💾 Автосохранение в localStorage
+- 🔄 История изменений (Undo)
+- 📊 Аналитика использования компонентов
+- 🚀 Экспорт и импорт проектов
+
+## 🚀 Быстрый старт
+
+### С Docker (рекомендуется)
+
+```bash
+# Development режим
+docker-compose up
+
+# Production режим
+docker-compose --profile production up
+```
+
+**Подробнее:** [DOCKER_QUICK_START.md](./DOCKER_QUICK_START.md)
+
+### Без Docker
+
+#### 1. Установка зависимостей
+
+```bash
+npm install
+```
+
+#### 2. Настройка Telegram авторизации (опционально)
+
+Для включения авторизации через Telegram следуйте инструкции в [TELEGRAM_SETUP.md](./TELEGRAM_SETUP.md)
+
+**Кратко:**
+1. Создайте бота через [@BotFather](https://t.me/BotFather)
+2. Настройте домен командой `/setdomain`
+3. Создайте `.env.local` с вашим bot username
+
+#### 3. Запуск dev сервера
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Откройте [http://localhost:3000](http://localhost:3000) в браузере.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 📚 Документация
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- 🐳 [Docker Quick Start](./DOCKER_QUICK_START.md) - запуск с Docker
+- 🐳 [Docker Guide](./docs/docker-guide.md) - подробная документация по Docker
+- 🔐 [Telegram Authorization Setup](./TELEGRAM_SETUP.md) - настройка авторизации через Telegram
+- 🔐 [Telegram Auth Details](./docs/telegram-auth-setup.md) - подробная документация по авторизации
+- 📦 [Component Creation Guide](./docs/component-creation-guide.md) - создание кастомных компонентов
 
-## Learn More
+## 🏗️ Технологии
 
-To learn more about Next.js, take a look at the following resources:
+- **Next.js 16** - React фреймворк
+- **TypeScript** - типизация
+- **Tailwind CSS** - стилизация
+- **Zustand** - state management
+- **Telegram Login Widget** - авторизация
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 🔐 Авторизация через Telegram
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+После настройки бота пользователи смогут:
+- Авторизоваться одним кликом через Telegram
+- Видеть свой профиль с аватаркой и именем
+- Данные сохраняются локально между сессиями
 
-## Deploy on Vercel
+## 🚢 Деплой
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Проект настроен для static export и может быть задеплоен на:
+- GitHub Pages
+- Vercel
+- Netlify
+- Любой static hosting
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+npm run build
+```
+
+## 📝 Структура проекта
+
+```
+src/
+├── app/              # Next.js app directory
+├── components/
+│   ├── auth/        # Компоненты авторизации (NEW!)
+│   ├── editor/      # Компоненты редактора
+│   └── ui-kit/      # UI компоненты
+├── store/           # Zustand stores
+│   ├── auth.ts     # Store авторизации (NEW!)
+│   └── editor.ts   # Store редактора
+├── types/           # TypeScript типы
+│   ├── user.ts     # Типы пользователя (NEW!)
+│   └── index.ts    # Типы компонентов
+└── utils/           # Утилиты
+```
+
+## 🤝 Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.

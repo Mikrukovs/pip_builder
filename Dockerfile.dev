@@ -1,0 +1,23 @@
+# Development Dockerfile для Next.js
+
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Устанавливаем зависимости для лучшей производительности
+RUN apk add --no-cache libc6-compat
+
+# Копируем package файлы
+COPY package*.json ./
+
+# Устанавливаем зависимости
+RUN npm install
+
+# Копируем остальные файлы
+COPY . .
+
+# Открываем порт
+EXPOSE 3000
+
+# Запускаем dev сервер
+CMD ["npm", "run", "dev"]

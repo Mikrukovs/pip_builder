@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  # Production сборка с nginx
+  app-prod:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_TELEGRAM_BOT_NAME: ${NEXT_PUBLIC_TELEGRAM_BOT_NAME:-}
+    container_name: prototype-builder-prod
+    ports:
+      - "8080:80"
+    restart: unless-stopped
+    profiles:
+      - production
+
+  # Development сервер
+  app-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: prototype-builder-dev
+    ports:
+      - "3000:3000"
+    volumes:
+      # Монтируем код для hot reload
+      - .:/app
+      - /app/node_modules
+      - /app/.next
+    environment:
+      - NODE_ENV=development
+      - NEXT_PUBLIC_TELEGRAM_BOT_NAME=${NEXT_PUBLIC_TELEGRAM_BOT_NAME:-}
+    restart: unless-stopped
+    profiles:
+      - development
+
+networks:
+  default:
+    name: prototype-builder-network
