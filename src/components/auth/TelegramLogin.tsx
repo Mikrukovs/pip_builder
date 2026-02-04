@@ -19,7 +19,7 @@ declare global {
 
 export function TelegramLogin({ botName, onAuth }: TelegramLoginProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const setUser = useAuthStore((state) => state.setUser);
+  const setUser = useAuthStore((state) => state.setAuth);
 
   // Если botName не указан, показываем предупреждение
   if (!botName) {
@@ -35,20 +35,29 @@ export function TelegramLogin({ botName, onAuth }: TelegramLoginProps) {
     // Функция callback для Telegram Widget
     const handleTelegramAuth = async (user: TelegramUser) => {
       try {
-        // Проверяем, что данные не устарели (не старше 24 часов)
-        const authDate = user.auth_date;
-        const currentTime = Math.floor(Date.now() / 1000);
-        const timeDiff = currentTime - authDate;
-        
-        if (timeDiff > 86400) { // 24 часа
-          throw new Error('Authentication data expired');
+        // Отправляем данные на сервер для верификации и получения JWT
+        const response = await fetch('/api/auth/telegram', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(user),
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || 'Authentication failed');
         }
 
-        // Сохраняем пользователя в store
-        // Примечание: В production окружении рекомендуется верифицировать hash на сервере
-        // Для этого проекта (static export) делаем упрощенную авторизацию
-        setUser(user);
-        onAuth?.(user);
+        const data = await response.json();
+
+        if (data.success && data.token) {
+          // Сохраняем пользователя и токен в store
+          setUser(data.user, data.token);
+          onAuth?.(data.user);
+        } else {
+          throw new Error('Invalid response from server');
+        }
       } catch (error) {
         console.error('Telegram authentication error:', error);
         alert('Ошибка авторизации. Попробуйте снова.');

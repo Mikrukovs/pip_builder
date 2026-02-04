@@ -12,18 +12,20 @@ import { TelegramLogin, UserProfile } from '@/components/auth';
 import { useState, useEffect } from 'react';
 import { Project } from '@/types';
 
-export function Editor() {
+interface EditorProps {
+  projectId?: number;
+}
+
+export function Editor({ projectId }: EditorProps) {
   const {
     project,
     selectedSlotId,
     selectedSlotType,
     showComponentPicker,
-    createProject,
     toggleComponentPicker,
     addComponentToSlot,
     updateComponent,
     removeComponentFromSlot,
-    getShareableLink,
     getCurrentScreen,
   } = useEditorStore();
 
@@ -32,22 +34,36 @@ export function Editor() {
   const [showImportModal, setShowImportModal] = useState(false);
   const [showAnalytics, setShowAnalytics] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [saving, setSaving] = useState(false);
   
-  // Ждём гидратации zustand store (загрузка данных из localStorage)
+  // Ждём гидратации zustand store
   const hydrated = useHydration();
   
-  // Хук для кастомных компонентов - должен быть до условных return
   const { components: customComponents } = useCustomComponentsStore();
-  
-  // Авторизация
-  const { isAuthenticated } = useAuthStore();
+  const { fetchWithAuth } = useAuthStore();
 
-  // Создаём проект при первом запуске, если его нет (только после гидратации)
+  // Автосохранение в БД каждые 3 секунды
   useEffect(() => {
-    if (hydrated && !project) {
-      createProject('Мой прототип');
-    }
-  }, [hydrated, project, createProject]);
+    if (!projectId || !project) return;
+
+    const interval = setInterval(async () => {
+      try {
+        setSaving(true);
+        await fetchWithAuth(`/api/projects/${projectId}`, {
+          method: 'PUT',
+          body: JSON.stringify({
+            data: project,
+          }),
+        });
+      } catch (error) {
+        console.error('Auto-save error:', error);
+      } finally {
+        setSaving(false);
+      }
+    }, 3000); // Сохраняем каждые 3 секунды
+
+    return () => clearInterval(interval);
+  }, [projectId, project]);
 
   // Показываем загрузку пока ждём данные из localStorage
   if (!hydrated) {
@@ -110,17 +126,34 @@ export function Editor() {
       {/* Top bar */}
       <div className="h-14 bg-white border-b border-gray-200 flex items-center justify-between px-4">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg" />
+          <button
+            onClick={() => window.location.href = '/'}
+            className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg hover:opacity-80 transition-opacity"
+          />
           <span className="font-semibold text-gray-900">Prototype Builder</span>
+          
+          {/* Auto-save indicator */}
+          {projectId && (
+            <div className="flex items-center gap-2 text-sm text-gray-500">
+              {saving ? (
+                <>
+                  <div className="w-3 h-3 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
+                  <span>Сохранение...</span>
+                </>
+              ) : (
+                <>
+                  <svg className="w-3 h-3 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                  <span>Сохранено</span>
+                </>
+              )}
+            </div>
+          )}
         </div>
         
         <div className="flex items-center gap-3">
-          {/* Авторизация через Telegram */}
-          {isAuthenticated ? (
-            <UserProfile />
-          ) : (
-            <TelegramLogin botName={process.env.NEXT_PUBLIC_TELEGRAM_BOT_NAME || ''} />
-          )}
+          <UserProfile />
           
           <div className="h-6 w-px bg-gray-200" />
           
