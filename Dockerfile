@@ -4,8 +4,8 @@
 FROM node:20-alpine AS deps
 WORKDIR /app
 
-# Установка зависимостей для native модулей
-RUN apk add --no-cache libc6-compat openssl
+# Установка зависимостей для native модулей (включая python и компиляторы для bcrypt)
+RUN apk add --no-cache libc6-compat openssl python3 make g++
 
 # Копируем package файлы
 COPY package*.json ./
