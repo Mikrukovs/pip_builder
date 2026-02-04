@@ -20,7 +20,9 @@ const nextConfig: NextConfig = {
       bodySizeLimit: '2mb',
     },
   },
-  // Webpack config для Tailwind CSS - fix fs module error
+  // Turbopack config (пустой, чтобы убрать warning)
+  turbopack: {},
+  // Webpack config для Tailwind CSS - fix fs module error (fallback для non-Turbopack)
   webpack: (config, { isServer }) => {
     if (!isServer) {
       config.resolve.fallback = {
