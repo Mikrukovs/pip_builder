@@ -4,16 +4,22 @@ FROM node:20-alpine
 
 WORKDIR /app
 
-# Устанавливаем зависимости для лучшей производительности
-RUN apk add --no-cache libc6-compat
+# Устанавливаем зависимости для native модулей
+RUN apk add --no-cache libc6-compat openssl python3 make g++
 
 # Копируем package файлы
 COPY package*.json ./
 
-# Устанавливаем зависимости
-RUN npm install
+# Копируем схему Prisma
+COPY prisma ./prisma/
 
-# Копируем остальные файлы
+# Устанавливаем зависимости БЕЗ postinstall
+RUN npm ci --ignore-scripts
+
+# Генерируем Prisma Client
+RUN npx prisma generate
+
+# Копируем остальные файлы (они будут перезаписаны volume mount)
 COPY . .
 
 # Открываем порт
