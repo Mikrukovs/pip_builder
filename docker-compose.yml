@@ -30,11 +30,15 @@ services:
     ports:
       - "8888:3000"
     volumes:
-      # Монтируем весь проект для hot reload
-      - .:/app
-      # Anonymous volumes чтобы не перезаписать node_modules из хоста
-      - /app/node_modules
-      - /app/.next
+      # Монтируем ТОЛЬКО исходники, НЕ монтируем node_modules
+      - ./src:/app/src
+      - ./public:/app/public
+      - ./prisma:/app/prisma
+      - ./package.json:/app/package.json
+      - ./package-lock.json:/app/package-lock.json
+      - ./postcss.config.mjs:/app/postcss.config.mjs
+      - ./next.config.ts:/app/next.config.ts
+      # node_modules и .next остаются в контейнере
     environment:
       - NODE_ENV=development
       - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-prototype_builder}
