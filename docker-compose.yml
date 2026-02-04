@@ -10,7 +10,7 @@ services:
         NEXT_PUBLIC_TELEGRAM_BOT_NAME: ${NEXT_PUBLIC_TELEGRAM_BOT_NAME:-}
     container_name: prototype-builder-prod
     ports:
-      - "8080:80"
+      - "8888:80"
     restart: unless-stopped
     profiles:
       - production

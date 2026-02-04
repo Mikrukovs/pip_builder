@@ -16,7 +16,7 @@ docker-compose up
 docker-compose --profile production up
 ```
 
-Откройте http://localhost:8080
+Откройте http://localhost:8888
 
 ### 3. Остановка
 
