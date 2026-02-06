@@ -3,28 +3,32 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/auth';
+import { generateAnonymousUser } from '@/utils/anonymous';
 
 export default function Home() {
   const router = useRouter();
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, setAuth } = useAuthStore();
 
   useEffect(() => {
-    // Редирект на login если не авторизован
+    // Автоматически создаём анонимного пользователя
     if (!isAuthenticated) {
-      router.push('/login');
+      const anonymousUser = generateAnonymousUser();
+      setAuth(anonymousUser, 'anonymous-token');
+      // Не делаем редирект, просто обновляем состояние
+    }
+  }, [isAuthenticated, setAuth]);
+
+  // Сразу редиректим на dashboard
+  useEffect(() => {
+    if (isAuthenticated) {
+      router.push('/');
     }
   }, [isAuthenticated, router]);
 
-  // Показываем loader пока проверяем auth
-  if (!isAuthenticated) {
-    return (
-      <div className="h-screen flex items-center justify-center">
-        <div className="animate-spin w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full" />
-      </div>
-    );
-  }
-
-  // Редирект на dashboard (который рендерится через (dashboard) group)
-  router.push('/');
-  return null;
+  // Показываем loader
+  return (
+    <div className="h-screen flex items-center justify-center">
+      <div className="animate-spin w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full" />
+    </div>
+  );
 }
