@@ -40,16 +40,10 @@ export default function DashboardPage() {
   const [newProjectName, setNewProjectName] = useState('');
   const [selectedFolderId, setSelectedFolderId] = useState<number | null>(null);
 
-  const isAnonymous = user?.telegramId === null;
-
   useEffect(() => {
-    // Для анонимных пользователей не загружаем данные с сервера
-    if (!isAnonymous) {
-      loadData();
-    } else {
-      setLoading(false);
-    }
-  }, [isAnonymous]);
+    loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   async function loadData() {
     try {
@@ -143,45 +137,6 @@ export default function DashboardPage() {
     return (
       <div className="h-screen flex items-center justify-center">
         <div className="animate-spin w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full" />
-      </div>
-    );
-  }
-
-  // Для анонимных пользователей показываем упрощённый интерфейс
-  if (isAnonymous) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center p-4">
-        <div className="bg-white rounded-2xl shadow-xl p-12 max-w-2xl text-center">
-          <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl mx-auto mb-6 flex items-center justify-center">
-            <svg className="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
-            </svg>
-          </div>
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">
-            Добро пожаловать, {user?.firstName}!
-          </h1>
-          <p className="text-lg text-gray-600 mb-8">
-            Вы вошли в анонимном режиме. <br/>
-            Для сохранения проектов войдите через Telegram.
-          </p>
-          <div className="flex flex-col gap-4">
-            <button
-              onClick={() => router.push('/editor')}
-              className="px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white text-lg font-semibold rounded-xl hover:shadow-lg transition-all"
-            >
-              🚀 Создать локальный проект
-            </button>
-            <button
-              onClick={() => router.push('/login')}
-              className="px-8 py-4 border-2 border-gray-300 text-gray-700 text-lg font-semibold rounded-xl hover:border-blue-500 hover:text-blue-600 transition-all"
-            >
-              Войти через Telegram
-            </button>
-          </div>
-          <p className="text-sm text-gray-500 mt-6">
-            В локальном режиме проекты сохраняются только в вашем браузере
-          </p>
-        </div>
       </div>
     );
   }

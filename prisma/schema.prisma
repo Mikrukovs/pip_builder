@@ -9,11 +9,18 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// Пользователи (из Telegram)
+// Пользователи (логин/пароль или Telegram)
 model User {
   id            Int      @id @default(autoincrement())
-  telegramId    BigInt   @unique @map("telegram_id")
-  username      String?  @db.VarChar(255)
+  
+  // Для логина/пароля
+  username      String   @unique @db.VarChar(255)
+  password      String?  @db.VarChar(255) // null для Telegram пользователей
+  
+  // Для Telegram
+  telegramId    BigInt?  @unique @map("telegram_id")
+  
+  // Общие поля
   firstName     String   @map("first_name") @db.VarChar(255)
   lastName      String?  @map("last_name") @db.VarChar(255)
   photoUrl      String?  @map("photo_url") @db.Text
