@@ -108,6 +108,16 @@ export function Editor({ projectId }: EditorProps) {
     };
   };
 
+  const getShareableLink = () => {
+    if (projectId) {
+      // Если это сохранённый проект - возвращаем ссылку на него
+      return `${window.location.origin}/editor/${projectId}`;
+    }
+    
+    // Для локального проекта - возвращаем ссылку на preview
+    return `${window.location.origin}/preview`;
+  };
+
   const handleShare = () => {
     const link = getShareableLink();
     setShareLink(link);
