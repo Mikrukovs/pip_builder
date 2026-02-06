@@ -27,6 +27,7 @@ export function useAnalytics({ projectId, enabled = true }: UseAnalyticsOptions)
   const sessionRef = useRef<AnalyticsSession | null>(null);
   const currentScreenRef = useRef<string | null>(null);
   const screenStartTimeRef = useRef<number>(Date.now());
+  const serverSessionIdRef = useRef<string | null>(null);
 
   // Инициализация сессии
   useEffect(() => {
@@ -43,6 +44,29 @@ export function useAnalytics({ projectId, enabled = true }: UseAnalyticsOptions)
 
     sessionRef.current = session;
 
+    // Создаём сессию на сервере
+    fetch('/api/analytics/session', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        projectId,
+        startTime: session.startTime,
+        userAgent: navigator.userAgent,
+      }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        serverSessionIdRef.current = data.sessionId;
+      })
+      .catch((error) => {
+        console.error('Failed to create analytics session:', error);
+      });
+
+    // Периодически сохраняем данные на сервер (каждые 10 секунд)
+    const saveInterval = setInterval(() => {
+      saveSession();
+    }, 10000);
+
     // Сохраняем при закрытии/уходе со страницы
     const handleBeforeUnload = () => {
       endSession();
@@ -51,50 +75,35 @@ export function useAnalytics({ projectId, enabled = true }: UseAnalyticsOptions)
     window.addEventListener('beforeunload', handleBeforeUnload);
 
     return () => {
+      clearInterval(saveInterval);
       window.removeEventListener('beforeunload', handleBeforeUnload);
       endSession();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [projectId, enabled]);
 
-  // Сохранение сессии в localStorage
+  // Сохранение сессии на сервер
   const saveSession = useCallback(() => {
-    if (!sessionRef.current) return;
+    if (!sessionRef.current || !serverSessionIdRef.current) return;
 
     try {
-      const stored = localStorage.getItem(ANALYTICS_STORAGE_KEY);
-      const analytics: Record<string, ProjectAnalytics> = stored ? JSON.parse(stored) : {};
-
-      if (!analytics[projectId]) {
-        analytics[projectId] = {
-          projectId,
-          sessions: [],
-          totalSessions: 0,
-          totalClicks: 0,
-          averageSessionDuration: 0,
-          heatmapData: {},
-          screenTimes: [],
-          transitions: [],
-        };
-      }
-
-      // Добавляем сессию (ограничиваем количество)
-      const projectAnalytics = analytics[projectId];
-      projectAnalytics.sessions.push(sessionRef.current);
-      
-      // Храним максимум 50 последних сессий
-      if (projectAnalytics.sessions.length > 50) {
-        projectAnalytics.sessions = projectAnalytics.sessions.slice(-50);
-      }
-
-      // Пересчитываем агрегированные данные
-      recalculateAggregates(projectAnalytics);
-
-      localStorage.setItem(ANALYTICS_STORAGE_KEY, JSON.stringify(analytics));
+      // Отправляем данные на сервер
+      fetch(`/api/analytics/session/${serverSessionIdRef.current}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          clicks: sessionRef.current.clicks,
+          screenTimes: sessionRef.current.screenTimes,
+          transitions: sessionRef.current.transitions,
+          endTime: sessionRef.current.endTime,
+        }),
+      }).catch((error) => {
+        console.error('Failed to save analytics session:', error);
+      });
     } catch (error) {
       console.error('Failed to save analytics:', error);
     }
-  }, [projectId]);
+  }, []);
 
   // Пересчет агрегированных данных
   const recalculateAggregates = (analytics: ProjectAnalytics) => {
@@ -276,31 +285,4 @@ export function useAnalytics({ projectId, enabled = true }: UseAnalyticsOptions)
     trackScreenChange,
     endSession,
   };
-}
-
-// Утилита для получения аналитики проекта
-export function getProjectAnalytics(projectId: string): ProjectAnalytics | null {
-  try {
-    const stored = localStorage.getItem(ANALYTICS_STORAGE_KEY);
-    if (!stored) return null;
-    
-    const analytics: Record<string, ProjectAnalytics> = JSON.parse(stored);
-    return analytics[projectId] || null;
-  } catch {
-    return null;
-  }
-}
-
-// Утилита для очистки аналитики проекта
-export function clearProjectAnalytics(projectId: string): void {
-  try {
-    const stored = localStorage.getItem(ANALYTICS_STORAGE_KEY);
-    if (!stored) return;
-    
-    const analytics: Record<string, ProjectAnalytics> = JSON.parse(stored);
-    delete analytics[projectId];
-    localStorage.setItem(ANALYTICS_STORAGE_KEY, JSON.stringify(analytics));
-  } catch (error) {
-    console.error('Failed to clear analytics:', error);
-  }
 }

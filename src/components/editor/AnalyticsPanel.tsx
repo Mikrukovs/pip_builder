@@ -1,9 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { ProjectAnalytics } from '@/types/analytics';
+import { ProjectAnalytics, AnalyticsSession as AnalyticsSessionType } from '@/types/analytics';
 import { Screen } from '@/types';
-import { getProjectAnalytics, clearProjectAnalytics } from '@/hooks/useAnalytics';
+import { useAuthStore } from '@/store/auth';
 import { HeatmapExport } from './HeatmapExport';
 
 interface AnalyticsPanelProps {
@@ -18,22 +18,135 @@ interface AnalyticsPanelProps {
 export function AnalyticsPanel({ projectId, currentScreenId, screens, currentScreen, embeddedComponents, onClose }: AnalyticsPanelProps) {
   const [analytics, setAnalytics] = useState<ProjectAnalytics | null>(null);
   const [showExport, setShowExport] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const { fetchWithAuth } = useAuthStore();
 
   useEffect(() => {
-    const data = getProjectAnalytics(projectId);
-    setAnalytics(data);
+    loadAnalytics();
   }, [projectId]);
 
+  const loadAnalytics = async () => {
+    try {
+      setLoading(true);
+      const response = await fetchWithAuth(`/api/analytics/project/${projectId}`);
+      
+      if (!response.ok) {
+        throw new Error('Failed to load analytics');
+      }
+
+      const { sessions } = await response.json();
+      
+      // Преобразуем сессии в ProjectAnalytics
+      const projectAnalytics = calculateAnalytics(sessions);
+      setAnalytics(projectAnalytics);
+    } catch (error) {
+      console.error('Load analytics error:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const calculateAnalytics = (sessions: any[]): ProjectAnalytics => {
+    const analytics: ProjectAnalytics = {
+      projectId,
+      sessions: sessions.map((s) => ({
+        id: s.id,
+        projectId: s.projectId,
+        startTime: parseInt(s.startTime),
+        endTime: s.endTime ? parseInt(s.endTime) : undefined,
+        clicks: s.clicks,
+        screenTimes: s.screenTimes,
+        transitions: s.transitions,
+      })),
+      totalSessions: sessions.length,
+      totalClicks: 0,
+      averageSessionDuration: 0,
+      heatmapData: {},
+      screenTimes: [],
+      transitions: [],
+    };
+
+    // Пересчитываем статистику (логика из recalculateAggregates)
+    analytics.totalClicks = analytics.sessions.reduce((sum, s) => sum + s.clicks.length, 0);
+    
+    // Среднее время сессии
+    const durations = analytics.sessions
+      .filter((s) => s.endTime)
+      .map((s) => s.endTime! - s.startTime);
+    analytics.averageSessionDuration =
+      durations.length > 0 ? durations.reduce((a, b) => a + b, 0) / durations.length : 0;
+
+    // Тепловая карта
+    const heatmapData: any = {};
+    analytics.sessions.forEach((session) => {
+      session.clicks.forEach((click: any) => {
+        const screenId = click.screenId;
+        const zone = click.zone || 'content';
+        
+        if (!heatmapData[screenId]) {
+          heatmapData[screenId] = {
+            navbar: [],
+            content: [],
+            sticky: [],
+          };
+        }
+        
+        const zoneData = heatmapData[screenId][zone];
+        const existing = zoneData.find(
+          (p: any) => Math.abs(p.x - click.x) < 0.03 && Math.abs(p.y - click.y) < 0.03
+        );
+        
+        if (existing) {
+          existing.intensity += 1;
+        } else {
+          zoneData.push({ x: click.x, y: click.y, intensity: 1 });
+        }
+      });
+    });
+    analytics.heatmapData = heatmapData;
+
+    // Время на экранах
+    const screenTimesMap: Record<string, { total: number; visits: number; name: string }> = {};
+    analytics.sessions.forEach((session) => {
+      Object.entries(session.screenTimes).forEach(([screenId, time]) => {
+        if (!screenTimesMap[screenId]) {
+          screenTimesMap[screenId] = { total: 0, visits: 0, name: screenId };
+        }
+        screenTimesMap[screenId].total += time as number;
+        screenTimesMap[screenId].visits += 1;
+      });
+    });
+    analytics.screenTimes = Object.entries(screenTimesMap).map(([screenId, data]) => ({
+      screenId,
+      screenName: data.name,
+      totalTime: data.total,
+      visits: data.visits,
+    }));
+
+    // Переходы
+    const transitionsMap: Record<string, number> = {};
+    analytics.sessions.forEach((session) => {
+      session.transitions.forEach((t: any) => {
+        const key = `${t.from}->${t.to}`;
+        transitionsMap[key] = (transitionsMap[key] || 0) + 1;
+      });
+    });
+    analytics.transitions = Object.entries(transitionsMap).map(([key, count]) => {
+      const [from, to] = key.split('->');
+      return { fromScreenId: from, toScreenId: to, count };
+    });
+
+    return analytics;
+  };
+
   const handleClear = () => {
-    if (confirm('Очистить всю статистику проекта?')) {
-      clearProjectAnalytics(projectId);
-      setAnalytics(null);
+    if (confirm('Очистить всю статистику проекта? (Эта функция пока не реализована)')) {
+      // TODO: добавить API endpoint для удаления статистики
     }
   };
 
   const handleRefresh = () => {
-    const data = getProjectAnalytics(projectId);
-    setAnalytics(data);
+    loadAnalytics();
   };
 
   // Форматирование времени

@@ -118,3 +118,19 @@ model SharedProject {
   @@index([projectId])
   @@map("shared_projects")
 }
+
+// Сессии аналитики (посещения preview)
+model AnalyticsSession {
+  id            String   @id @default(cuid())
+  projectId     String   @map("project_id") // ID проекта или shareId
+  startTime     BigInt   @map("start_time") // timestamp
+  endTime       BigInt?  @map("end_time") // timestamp
+  userAgent     String?  @map("user_agent") @db.Text
+  clicks        Json     @default("[]") // ClickEvent[]
+  screenTimes   Json     @default("{}") // Record<screenId, milliseconds>
+  transitions   Json     @default("[]") // ScreenTransition[]
+  createdAt     DateTime @default(now()) @map("created_at")
+  
+  @@index([projectId])
+  @@map("analytics_sessions")
+}
