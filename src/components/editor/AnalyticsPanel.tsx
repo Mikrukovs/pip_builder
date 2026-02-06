@@ -26,6 +26,12 @@ export function AnalyticsPanel({ projectId, currentScreenId, screens, currentScr
   }, [projectId]);
 
   const loadAnalytics = async () => {
+    if (!projectId) {
+      setLoading(false);
+      setAnalytics(null);
+      return;
+    }
+
     try {
       setLoading(true);
       
