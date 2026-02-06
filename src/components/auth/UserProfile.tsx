@@ -12,14 +12,14 @@ export function UserProfile() {
 
   const displayName = user.username 
     ? `@${user.username}` 
-    : `${user.first_name}${user.last_name ? ` ${user.last_name}` : ''}`;
+    : `${user.firstName}${user.lastName ? ` ${user.lastName}` : ''}`;
 
   return (
     <div className="flex items-center gap-3 px-4 py-2 bg-white rounded-lg shadow-sm border border-gray-200">
       {/* Аватар */}
-      {user.photo_url ? (
+      {user.photoUrl ? (
         <Image
-          src={user.photo_url}
+          src={user.photoUrl}
           alt={displayName}
           width={40}
           height={40}
@@ -28,14 +28,14 @@ export function UserProfile() {
         />
       ) : (
         <div className="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center text-white font-medium">
-          {user.first_name.charAt(0).toUpperCase()}
+          {user.firstName.charAt(0).toUpperCase()}
         </div>
       )}
 
       {/* Имя пользователя */}
       <div className="flex flex-col">
         <span className="text-sm font-medium text-gray-900">
-          {user.first_name} {user.last_name || ''}
+          {user.firstName} {user.lastName || ''}
         </span>
         {user.username && (
           <span className="text-xs text-gray-500">
