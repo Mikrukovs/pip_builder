@@ -35,8 +35,15 @@ export function AnalyticsPanel({ projectId, currentScreenId, screens, currentScr
         return null;
       });
       
-      if (!response || !response.ok) {
-        console.error('Failed to load analytics');
+      if (!response) {
+        console.error('Failed to fetch analytics');
+        setAnalytics(null);
+        return;
+      }
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error('Failed to load analytics:', response.status, errorData);
         setAnalytics(null);
         return;
       }
