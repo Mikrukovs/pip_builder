@@ -160,9 +160,26 @@ export function AnalyticsPanel({ projectId, currentScreenId, screens, currentScr
     return analytics;
   };
 
-  const handleClear = () => {
-    if (confirm('Очистить всю статистику проекта? (Эта функция пока не реализована)')) {
-      // TODO: добавить API endpoint для удаления статистики
+  const handleClear = async () => {
+    if (!confirm('Очистить всю статистику проекта? Это действие нельзя отменить.')) {
+      return;
+    }
+
+    try {
+      const response = await fetchWithAuth(`/api/analytics/project/${projectId}/clear`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        setAnalytics(null);
+        alert('Статистика успешно очищена');
+      } else {
+        const error = await response.json();
+        alert(`Ошибка: ${error.error || 'Не удалось очистить статистику'}`);
+      }
+    } catch (error) {
+      console.error('Clear analytics error:', error);
+      alert('Ошибка при очистке статистики');
     }
   };
 
