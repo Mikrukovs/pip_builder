@@ -31,6 +31,7 @@ export function Editor({ projectId }: EditorProps) {
   } = useEditorStore();
 
   const [shareLink, setShareLink] = useState('');
+  const [shareId, setShareId] = useState<string | null>(null);
   const [showShareModal, setShowShareModal] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
   const [showAnalytics, setShowAnalytics] = useState(false);
@@ -129,8 +130,9 @@ export function Editor({ projectId }: EditorProps) {
         throw new Error('Failed to create share link');
       }
 
-      const { shareUrl } = await response.json();
+      const { shareUrl, shareId: newShareId } = await response.json();
       setShareLink(shareUrl);
+      setShareId(newShareId);
       setShowShareModal(true);
       setCopied(false);
     } catch (error) {
@@ -288,7 +290,7 @@ export function Editor({ projectId }: EditorProps) {
         {/* Analytics panel */}
         {showAnalytics && project && projectId && (
           <AnalyticsPanel
-            projectId={projectId.toString()}
+            projectId={shareId || projectId.toString()}
             currentScreenId={currentScreen?.id || null}
             screens={project.screens.map(s => ({ id: s.id, name: s.name }))}
             currentScreen={currentScreen || null}
