@@ -285,9 +285,9 @@ export function Editor({ projectId }: EditorProps) {
         </div>
 
         {/* Analytics panel */}
-        {showAnalytics && project && (
+        {showAnalytics && project && projectId && (
           <AnalyticsPanel
-            projectId={project.id}
+            projectId={projectId.toString()}
             currentScreenId={currentScreen?.id || null}
             screens={project.screens.map(s => ({ id: s.id, name: s.name }))}
             currentScreen={currentScreen || null}

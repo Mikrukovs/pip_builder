@@ -127,7 +127,7 @@ model AnalyticsSession {
   endTime       BigInt?  @map("end_time") // timestamp
   userAgent     String?  @map("user_agent") @db.Text
   clicks        Json     @default("[]") // ClickEvent[]
-  screenTimes   Json     @default("{}") // Record<screenId, milliseconds>
+  screenTimes   Json     @default("{}") @map("screen_times") // Record<screenId, milliseconds>
   transitions   Json     @default("[]") // ScreenTransition[]
   createdAt     DateTime @default(now()) @map("created_at")
   

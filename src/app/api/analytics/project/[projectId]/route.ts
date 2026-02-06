@@ -40,16 +40,23 @@ export async function GET(
 
     // Конвертируем BigInt в строки для JSON
     const sessionsFormatted = sessions.map((session) => ({
-      ...session,
+      id: session.id,
+      projectId: session.projectId,
       startTime: session.startTime.toString(),
       endTime: session.endTime?.toString() || null,
+      userAgent: session.userAgent,
+      clicks: session.clicks,
+      screenTimes: session.screenTimes,
+      transitions: session.transitions,
+      createdAt: session.createdAt.toISOString(),
     }));
 
     return NextResponse.json({ sessions: sessionsFormatted });
   } catch (error) {
     console.error('Get project analytics error:', error);
+    console.error('Error details:', error instanceof Error ? error.message : error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Internal server error', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     );
   }
