@@ -3,8 +3,8 @@ import { persist } from 'zustand/middleware';
 
 interface User {
   id: number;
-  telegramId: string | null; // null для анонимных пользователей
-  username: string | null;
+  telegramId: string | null; // null для обычных пользователей (логин/пароль)
+  username: string; // Обязательный логин для всех пользователей
   firstName: string;
   lastName: string | null;
   photoUrl: string | null;
