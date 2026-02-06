@@ -15,11 +15,13 @@ export default function DashboardLayout({
 
   useEffect(() => {
     // Автоматически создаём анонимного пользователя при первом заходе
+    // Срабатывает только один раз при монтировании
     if (!isAuthenticated) {
       const anonymousUser = generateAnonymousUser();
       setAuth(anonymousUser, 'anonymous-token');
     }
-  }, [isAuthenticated, setAuth]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   if (!isAuthenticated) {
     return (
