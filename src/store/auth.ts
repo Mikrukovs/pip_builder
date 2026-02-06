@@ -3,11 +3,13 @@ import { persist } from 'zustand/middleware';
 
 interface User {
   id: number;
-  telegramId: string;
+  telegramId: string | null; // null для анонимных пользователей
   username: string | null;
   firstName: string;
   lastName: string | null;
   photoUrl: string | null;
+  createdAt: string;
+  updatedAt: string;
 }
 
 interface AuthState {
