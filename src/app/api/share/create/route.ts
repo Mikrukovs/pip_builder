@@ -34,14 +34,47 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Создаём публичную ссылку
-    const sharedProject = await prisma.sharedProject.create({
-      data: {
-        projectId: projectId || null,
-        data,
-        expiresAt: null, // Можно добавить срок действия
-      },
-    });
+    // Ищем существующую активную ссылку для проекта
+    let sharedProject;
+    
+    if (projectId) {
+      // Для сохранённых проектов - ищем существующую ссылку
+      sharedProject = await prisma.sharedProject.findFirst({
+        where: {
+          projectId,
+          OR: [
+            { expiresAt: null }, // Без срока действия
+            { expiresAt: { gt: new Date() } }, // Или ещё не истёкшая
+          ],
+        },
+      });
+
+      if (sharedProject) {
+        // Обновляем данные в существующей ссылке
+        sharedProject = await prisma.sharedProject.update({
+          where: { id: sharedProject.id },
+          data: { data },
+        });
+      } else {
+        // Создаём новую
+        sharedProject = await prisma.sharedProject.create({
+          data: {
+            projectId,
+            data,
+            expiresAt: null,
+          },
+        });
+      }
+    } else {
+      // Для локальных проектов всегда создаём новую ссылку
+      sharedProject = await prisma.sharedProject.create({
+        data: {
+          projectId: null,
+          data,
+          expiresAt: null,
+        },
+      });
+    }
 
     // Определяем базовый URL из заголовков запроса
     const host = request.headers.get('host') || 'localhost:3000';
