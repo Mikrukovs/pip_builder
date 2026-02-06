@@ -28,10 +28,17 @@ export function AnalyticsPanel({ projectId, currentScreenId, screens, currentScr
   const loadAnalytics = async () => {
     try {
       setLoading(true);
-      const response = await fetchWithAuth(`/api/analytics/project/${projectId}`);
       
-      if (!response.ok) {
-        throw new Error('Failed to load analytics');
+      // Если нет авторизации, пропускаем загрузку
+      const response = await fetchWithAuth(`/api/analytics/project/${projectId}`).catch((error) => {
+        console.error('Analytics fetch error:', error);
+        return null;
+      });
+      
+      if (!response || !response.ok) {
+        console.error('Failed to load analytics');
+        setAnalytics(null);
+        return;
       }
 
       const { sessions } = await response.json();
@@ -41,6 +48,7 @@ export function AnalyticsPanel({ projectId, currentScreenId, screens, currentScr
       setAnalytics(projectAnalytics);
     } catch (error) {
       console.error('Load analytics error:', error);
+      setAnalytics(null);
     } finally {
       setLoading(false);
     }
@@ -199,7 +207,11 @@ export function AnalyticsPanel({ projectId, currentScreenId, screens, currentScr
       </div>
 
       <div className="flex-1 overflow-y-auto">
-        {!analytics ? (
+        {loading ? (
+          <div className="flex items-center justify-center h-full">
+            <div className="animate-spin w-8 h-8 border-2 border-purple-600 border-t-transparent rounded-full" />
+          </div>
+        ) : !analytics ? (
           <div className="p-6 text-center">
             <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
