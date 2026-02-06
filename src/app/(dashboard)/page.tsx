@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useAuthStore } from '@/store/auth';
 import { UserProfile } from '@/components/auth';
 import { useRouter } from 'next/navigation';
+import { generateUUID } from '@/utils/uuid';
 
 interface Folder {
   id: number;
@@ -97,7 +98,7 @@ export default function DashboardPage() {
           folderId: selectedFolderId,
           data: {
             screens: [{
-              id: crypto.randomUUID(),
+              id: generateUUID(),
               name: 'Главная',
               slots: [],
               stickySlots: [],
