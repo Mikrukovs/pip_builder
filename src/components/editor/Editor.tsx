@@ -78,6 +78,20 @@ export function Editor({ projectId }: EditorProps) {
     },
   }) : { isConnected: false, activeUsers: [], sendProjectUpdate: () => {} };
 
+  // Загрузить существующий shareId для аналитики
+  useEffect(() => {
+    if (!projectId) return;
+    
+    fetchWithAuth(`/api/share/list?projectId=${projectId}`)
+      .then(res => res.ok ? res.json() : null)
+      .then(data => {
+        if (data?.shares?.length > 0) {
+          setShareId(data.shares[0].id);
+        }
+      })
+      .catch(() => {});
+  }, [projectId]);
+
   // Автосохранение в БД каждые 3 секунды
   useEffect(() => {
     if (!projectId || !project) return;
