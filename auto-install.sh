@@ -19,6 +19,13 @@ REPO_URL="https://github.com/Mikrukovs/pip_builder.git"
 BRANCH="dev"
 PROJECT_DIR="$HOME/projects/pip_builder"
 
+# Определяем команду docker compose (V2 или V1)
+if docker compose version &>/dev/null; then
+    DOCKER_COMPOSE="docker compose"
+else
+    DOCKER_COMPOSE="docker-compose"
+fi
+
 echo -e "${BLUE}╔════════════════════════════════════════╗${NC}"
 echo -e "${BLUE}║   🚀 Prototype Builder Auto Install   ║${NC}"
 echo -e "${BLUE}╔════════════════════════════════════════╗${NC}"
@@ -74,6 +81,12 @@ if ! command -v docker &> /dev/null; then
     sudo apt update
     sudo apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
     
+    # Устанавливаем docker-compose (старая версия для совместимости)
+    if ! command -v docker-compose &> /dev/null; then
+        sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+        sudo chmod +x /usr/local/bin/docker-compose
+    fi
+    
     # Добавляем пользователя в группу docker
     sudo usermod -aG docker $USER
     
@@ -81,6 +94,23 @@ if ! command -v docker &> /dev/null; then
     print_warning "Перелогиньтесь после установки: exit, затем снова подключитесь по SSH"
 else
     print_success "Docker уже установлен: $(docker --version)"
+    
+    # Проверяем docker-compose
+    if ! command -v docker-compose &> /dev/null; then
+        print_warning "docker-compose не найден. Устанавливаю..."
+        sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+        sudo chmod +x /usr/local/bin/docker-compose
+        print_success "docker-compose установлен"
+    fi
+fi
+
+# Определяем команду docker compose (V2 или V1)
+if docker compose version &>/dev/null; then
+    DOCKER_COMPOSE="docker compose"
+    print_success "Используется Docker Compose V2"
+else
+    DOCKER_COMPOSE="docker-compose"
+    print_success "Используется Docker Compose V1"
 fi
 
 # Проверяем, что пользователь в группе docker
@@ -170,15 +200,15 @@ print_status "Шаг 7/8: Запуск Docker контейнеров..."
 cd "$PROJECT_DIR"
 
 # Останавливаем старые контейнеры (если есть)
-docker compose down 2>/dev/null || true
+$DOCKER_COMPOSE down 2>/dev/null || true
 
 # Собираем образ
 print_status "Собираю Docker образ (это может занять несколько минут)..."
-docker compose build app-dev
+$DOCKER_COMPOSE build app-dev
 
 # Запускаем контейнеры
 print_status "Запускаю контейнеры..."
-docker compose up -d
+$DOCKER_COMPOSE up -d
 
 # Ждём запуска PostgreSQL
 print_status "Ожидаю запуска PostgreSQL..."
@@ -187,7 +217,7 @@ sleep 10
 # Проверяем, что PostgreSQL запущен
 MAX_RETRIES=30
 RETRY_COUNT=0
-while ! docker compose exec postgres pg_isready -U postgres > /dev/null 2>&1; do
+while ! $DOCKER_COMPOSE exec postgres pg_isready -U postgres > /dev/null 2>&1; do
     RETRY_COUNT=$((RETRY_COUNT+1))
     if [ $RETRY_COUNT -ge $MAX_RETRIES ]; then
         print_error "PostgreSQL не запустился за отведенное время"
@@ -201,15 +231,15 @@ print_success "PostgreSQL запущен"
 
 # Применяем миграции
 print_status "Применяю миграции базы данных..."
-docker compose exec -T app-dev npx prisma migrate deploy
+$DOCKER_COMPOSE exec -T app-dev npx prisma migrate deploy
 
 # Генерируем Prisma Client
 print_status "Генерирую Prisma Client..."
-docker compose exec -T app-dev npx prisma generate
+$DOCKER_COMPOSE exec -T app-dev npx prisma generate
 
 # Перезапускаем приложение
 print_status "Перезапускаю приложение..."
-docker compose restart app-dev
+$DOCKER_COMPOSE restart app-dev
 
 print_success "Docker контейнеры запущены"
 
@@ -266,7 +296,7 @@ fi
 
 # Финальная проверка
 print_status "Проверяю статус контейнеров..."
-docker compose ps
+$DOCKER_COMPOSE ps
 
 echo ""
 echo -e "${GREEN}╔════════════════════════════════════════════════════════╗${NC}"
