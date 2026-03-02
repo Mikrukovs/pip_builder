@@ -29,6 +29,7 @@ model User {
 
   // Связи
   folders          Folder[]
+  folderAccess     FolderCollaborator[]
   projectAccess    ProjectCollaborator[]
   projectHistory   ProjectHistory[]
 
@@ -44,11 +45,30 @@ model Folder {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   // Связи
-  owner    User      @relation(fields: [ownerId], references: [id], onDelete: Cascade)
-  projects Project[]
+  owner         User                   @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  projects      Project[]
+  collaborators FolderCollaborator[]
 
   @@index([ownerId])
   @@map("folders")
+}
+
+// Доступ к папкам (collaborative folders)
+model FolderCollaborator {
+  id        Int      @id @default(autoincrement())
+  folderId  Int      @map("folder_id")
+  userId    Int      @map("user_id")
+  role      String   @default("editor") @db.VarChar(50) // owner, editor, viewer
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Связи
+  folder Folder @relation(fields: [folderId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([folderId, userId])
+  @@index([folderId])
+  @@index([userId])
+  @@map("folder_collaborators")
 }
 
 // Проекты (прототипы)
@@ -104,11 +124,12 @@ model ProjectHistory {
   @@map("project_history")
 }
 
-// Публичные ссылки на проекты (для preview)
+// Публичные ссылки на проекты (для preview и редактирования)
 model SharedProject {
   id        String   @id @default(cuid())
   projectId Int?     @map("project_id")
   data      Json     // Snapshot проекта
+  accessType String  @default("view") @map("access_type") @db.VarChar(20) // view, edit
   createdAt DateTime @default(now()) @map("created_at")
   expiresAt DateTime? @map("expires_at")
   
@@ -116,6 +137,7 @@ model SharedProject {
   project Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
 
   @@index([projectId])
+  @@index([accessType])
   @@map("shared_projects")
 }
 

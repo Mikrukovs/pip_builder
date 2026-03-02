@@ -8,7 +8,7 @@ export async function POST(request: NextRequest) {
     const auth = await requireAuth(request.headers.get('authorization'));
     
     const body = await request.json();
-    const { projectId, data } = body;
+    const { projectId, data, accessType = 'view' } = body;
 
     if (!data) {
       return NextResponse.json(
@@ -34,14 +34,15 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Ищем существующую активную ссылку для проекта
+    // Ищем существующую активную ссылку для проекта с таким же accessType
     let sharedProject;
     
     if (projectId) {
-      // Для сохранённых проектов - ищем существующую ссылку
+      // Для сохранённых проектов - ищем существующую ссылку с таким же типом доступа
       sharedProject = await prisma.sharedProject.findFirst({
         where: {
           projectId,
+          accessType,
           OR: [
             { expiresAt: null }, // Без срока действия
             { expiresAt: { gt: new Date() } }, // Или ещё не истёкшая
@@ -61,6 +62,7 @@ export async function POST(request: NextRequest) {
           data: {
             projectId,
             data,
+            accessType,
             expiresAt: null,
           },
         });
@@ -71,6 +73,7 @@ export async function POST(request: NextRequest) {
         data: {
           projectId: null,
           data,
+          accessType,
           expiresAt: null,
         },
       });
@@ -81,9 +84,13 @@ export async function POST(request: NextRequest) {
     const protocol = request.headers.get('x-forwarded-proto') || (host.includes('localhost') ? 'http' : 'https');
     const baseUrl = `${protocol}://${host}`;
 
+    // Для edit доступа используем /editor, для view - /preview
+    const path = accessType === 'edit' ? 'editor' : 'preview';
+    
     return NextResponse.json({
       shareId: sharedProject.id,
-      shareUrl: `${baseUrl}/preview?id=${sharedProject.id}`,
+      shareUrl: `${baseUrl}/${path}?id=${sharedProject.id}`,
+      accessType: sharedProject.accessType,
     });
   } catch (error) {
     console.error('Create share link error:', error);

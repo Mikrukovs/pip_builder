@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { requireAuth } from '@/lib/auth';
 
-// GET /api/folders - Получить все папки пользователя
+// GET /api/folders - Получить все папки пользователя (свои + shared)
 export async function GET(request: NextRequest) {
   try {
     const auth = await requireAuth(request.headers.get('authorization'));
@@ -10,15 +10,66 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const folders = await prisma.folder.findMany({
+    // Получаем свои папки
+    const ownFolders = await prisma.folder.findMany({
       where: { ownerId: auth.userId },
       include: {
         _count: {
-          select: { projects: true },
+          select: { projects: true, collaborators: true },
+        },
+        owner: {
+          select: {
+            id: true,
+            username: true,
+            firstName: true,
+            lastName: true,
+          },
         },
       },
       orderBy: { createdAt: 'desc' },
     });
+
+    // Получаем папки, к которым есть доступ
+    const sharedFolders = await prisma.folder.findMany({
+      where: {
+        collaborators: {
+          some: {
+            userId: auth.userId,
+          },
+        },
+      },
+      include: {
+        _count: {
+          select: { projects: true, collaborators: true },
+        },
+        owner: {
+          select: {
+            id: true,
+            username: true,
+            firstName: true,
+            lastName: true,
+          },
+        },
+        collaborators: {
+          where: {
+            userId: auth.userId,
+          },
+          select: {
+            role: true,
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    // Объединяем с пометкой роли
+    const folders = [
+      ...ownFolders.map((f) => ({ ...f, userRole: 'owner' as const })),
+      ...sharedFolders.map((f) => ({
+        ...f,
+        userRole: f.collaborators[0]?.role || 'viewer',
+      })),
+    ];
 
     return NextResponse.json({ folders });
   } catch (error) {
