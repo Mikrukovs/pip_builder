@@ -165,6 +165,7 @@ export function FolderShareModal({
             </label>
             <input
               type="text"
+              name="user-search-query"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Поиск по имени или username..."
@@ -174,6 +175,7 @@ export function FolderShareModal({
               spellCheck="false"
               data-lpignore="true"
               data-form-type="other"
+              data-1p-ignore="true"
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
 

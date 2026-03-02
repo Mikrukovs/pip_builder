@@ -76,6 +76,7 @@ export function AccessDenied({ projectId, projectName }: AccessDeniedProps) {
                 Сообщение владельцу (необязательно)
               </label>
               <textarea
+                name="access-request-message"
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
                 placeholder="Расскажите, зачем вам нужен доступ..."
@@ -85,6 +86,7 @@ export function AccessDenied({ projectId, projectName }: AccessDeniedProps) {
                 spellCheck="false"
                 data-lpignore="true"
                 data-form-type="other"
+                data-1p-ignore="true"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
                 rows={3}
                 disabled={requesting}
