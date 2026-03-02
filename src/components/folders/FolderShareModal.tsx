@@ -11,7 +11,13 @@ interface User {
   photoUrl: string | null;
 }
 
-interface Collaborator extends User {
+interface Collaborator {
+  id: number; // ID записи FolderCollaborator
+  userId: number; // ID пользователя
+  username: string;
+  firstName: string;
+  lastName: string | null;
+  photoUrl: string | null;
   role: string;
   createdAt: string;
 }
@@ -295,9 +301,9 @@ export function FolderShareModal({
                     <span className="text-xs font-medium text-gray-600 bg-gray-100 px-2 py-1 rounded">
                       {collab.role === 'editor' ? 'Редактор' : 'Просмотр'}
                     </span>
-                    {collab.id !== user?.id && (
+                    {collab.userId !== user?.id && (
                       <button
-                        onClick={() => removeCollaborator(collab.id)}
+                        onClick={() => removeCollaborator(collab.userId)}
                         className="text-red-600 hover:text-red-700 p-1"
                         title="Удалить доступ"
                       >
