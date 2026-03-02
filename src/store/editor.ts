@@ -161,9 +161,28 @@ export const useEditorStore = create<EditorState>()(
       },
 
       // Синхронизация проекта от других пользователей (без сброса UI)
-      syncProject: (project) => {
+      syncProject: (incomingProject) => {
+        const { project: currentProject } = get();
+        
+        // Если нет текущего проекта, просто загружаем входящий
+        if (!currentProject) {
+          set({ 
+            project: incomingProject,
+            isSyncing: true,
+          });
+          setTimeout(() => set({ isSyncing: false }), 100);
+          return;
+        }
+        
+        // Проверяем timestamp - не применяем старые изменения
+        if (incomingProject.updatedAt <= currentProject.updatedAt) {
+          console.log('Ignoring older project update');
+          return;
+        }
+        
+        // Применяем изменения
         set({ 
-          project,
+          project: incomingProject,
           isSyncing: true,
         });
         

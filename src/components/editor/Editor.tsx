@@ -125,16 +125,17 @@ export function Editor({ projectId }: EditorProps) {
       return; // Не отправляем, если это внешнее обновление
     }
 
-    // Debounce: отправляем изменения через 500мс после последнего изменения
+    // Debounce: отправляем изменения через 1500мс после последнего изменения
+    // Это даёт пользователю время на ввод текста без прерываний
     const timeout = setTimeout(() => {
       const timeSinceLastExternalUpdate = Date.now() - lastUpdateRef.current;
       
-      // Не отправляем, если недавно получили обновление от другого пользователя
-      if (timeSinceLastExternalUpdate > 1000) {
+      // Не отправляем, если недавно получили обновление от другого пользователя (в течение 2 секунд)
+      if (timeSinceLastExternalUpdate > 2000) {
         console.log('Sending project update via WebSocket');
         sendProjectUpdate(project);
       }
-    }, 500);
+    }, 1500);
 
     return () => clearTimeout(timeout);
   }, [projectId, project, isConnected, sendProjectUpdate]);
