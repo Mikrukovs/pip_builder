@@ -2,25 +2,59 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { requireAuth } from '@/lib/auth';
 
-// Проверка доступа к проекту
+// Проверка доступа к проекту (через прямой доступ или через папку)
 async function checkProjectAccess(projectId: number, userId: number, minRole: 'viewer' | 'editor' | 'owner' = 'viewer') {
-  const access = await prisma.projectCollaborator.findFirst({
+  const roleHierarchy = { viewer: 0, editor: 1, owner: 2 };
+
+  // Проверяем прямой доступ к проекту
+  const projectAccess = await prisma.projectCollaborator.findFirst({
     where: {
       projectId,
       userId,
     },
   });
 
-  if (!access) {
+  if (projectAccess && roleHierarchy[projectAccess.role as keyof typeof roleHierarchy] >= roleHierarchy[minRole]) {
+    return { role: projectAccess.role, source: 'project' };
+  }
+
+  // Проверяем доступ через папку
+  const project = await prisma.project.findUnique({
+    where: { id: projectId },
+    select: {
+      folderId: true,
+    },
+  });
+
+  if (!project || !project.folderId) {
     return null;
   }
 
-  const roleHierarchy = { viewer: 0, editor: 1, owner: 2 };
-  if (roleHierarchy[access.role as keyof typeof roleHierarchy] < roleHierarchy[minRole]) {
-    return null;
+  // Проверяем, является ли пользователь владельцем папки
+  const folder = await prisma.folder.findFirst({
+    where: {
+      id: project.folderId,
+      ownerId: userId,
+    },
+  });
+
+  if (folder && roleHierarchy['owner'] >= roleHierarchy[minRole]) {
+    return { role: 'owner', source: 'folder' };
   }
 
-  return access;
+  // Проверяем, является ли пользователь коллаборатором папки
+  const folderAccess = await prisma.folderCollaborator.findFirst({
+    where: {
+      folderId: project.folderId,
+      userId,
+    },
+  });
+
+  if (folderAccess && roleHierarchy[folderAccess.role as keyof typeof roleHierarchy] >= roleHierarchy[minRole]) {
+    return { role: folderAccess.role, source: 'folder' };
+  }
+
+  return null;
 }
 
 // GET /api/projects/:id - Получить проект
@@ -122,7 +156,7 @@ export async function PUT(
       data: {
         projectId,
         userId: auth.userId,
-        data: project.data,
+        data: project.data as any,
       },
     });
 
