@@ -41,10 +41,13 @@ app.prepare().then(() => {
     }
 
     try {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'default-secret');
+      // Используем NEXTAUTH_SECRET, как и в auth.ts
+      const jwtSecret = process.env.NEXTAUTH_SECRET || process.env.JWT_SECRET || 'development-secret-please-change';
+      const decoded = jwt.verify(token, jwtSecret);
       socket.userId = decoded.userId;
       next();
     } catch (error) {
+      console.error('WebSocket auth error:', error.message);
       next(new Error('Invalid token'));
     }
   });
