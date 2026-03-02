@@ -19,7 +19,7 @@ export async function DELETE(
     const projectId = parseInt(id);
     const targetUserId = parseInt(userId);
 
-    // Проверяем, что проект существует и пользователь - владелец
+    // Проверяем, что проект существует
     const project = await prisma.project.findUnique({
       where: { id: projectId },
     });
@@ -28,7 +28,16 @@ export async function DELETE(
       return NextResponse.json({ error: 'Project not found' }, { status: 404 });
     }
 
-    if (project.ownerId !== auth.userId) {
+    // Проверяем, что пользователь - owner проекта
+    const isOwner = await prisma.projectCollaborator.findFirst({
+      where: {
+        projectId,
+        userId: auth.userId,
+        role: 'owner',
+      },
+    });
+
+    if (!isOwner) {
       return NextResponse.json({ error: 'Only owner can remove collaborators' }, { status: 403 });
     }
 

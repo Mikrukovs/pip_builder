@@ -35,7 +35,6 @@ export async function GET(
     }
 
     // Проверяем права доступа
-    const isOwner = project.ownerId === auth.userId;
     const isProjectCollaborator = await prisma.projectCollaborator.findFirst({
       where: {
         projectId,
@@ -51,7 +50,7 @@ export async function GET(
         })
       : null;
 
-    if (!isOwner && !isProjectCollaborator && !isFolderCollaborator) {
+    if (!isProjectCollaborator && !isFolderCollaborator) {
       return NextResponse.json({ error: 'Access denied' }, { status: 403 });
     }
 
@@ -101,7 +100,7 @@ export async function POST(
       return NextResponse.json({ error: 'userId is required' }, { status: 400 });
     }
 
-    // Проверяем, что проект существует и пользователь - владелец
+    // Проверяем, что проект существует
     const project = await prisma.project.findUnique({
       where: { id: projectId },
     });
@@ -110,7 +109,16 @@ export async function POST(
       return NextResponse.json({ error: 'Project not found' }, { status: 404 });
     }
 
-    if (project.ownerId !== auth.userId) {
+    // Проверяем, что пользователь - owner проекта
+    const isOwner = await prisma.projectCollaborator.findFirst({
+      where: {
+        projectId,
+        userId: auth.userId,
+        role: 'owner',
+      },
+    });
+
+    if (!isOwner) {
       return NextResponse.json({ error: 'Only owner can add collaborators' }, { status: 403 });
     }
 
