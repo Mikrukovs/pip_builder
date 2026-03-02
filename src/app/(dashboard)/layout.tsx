@@ -11,21 +11,22 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const router = useRouter();
-  const { isAuthenticated, user } = useAuthStore();
+  const { isAuthenticated, user, hydrated } = useAuthStore();
 
   useEffect(() => {
-    // Если не авторизован или нет данных пользователя - редирект на страницу логина
-    if (!isAuthenticated || !user) {
+    // Проверяем авторизацию только после гидратации store
+    if (hydrated && (!isAuthenticated || !user)) {
       router.push('/login');
     }
-  }, [isAuthenticated, user, router]);
+  }, [hydrated, isAuthenticated, user, router]);
+
+  // Пока store не гидратирован - ничего не показываем (предотвращает мелькание)
+  if (!hydrated) {
+    return null;
+  }
 
   if (!isAuthenticated || !user) {
-    return (
-      <div className="h-screen flex items-center justify-center">
-        <div className="animate-spin w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full" />
-      </div>
-    );
+    return null;
   }
 
   return (

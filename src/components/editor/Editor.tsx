@@ -8,9 +8,11 @@ import { ComponentPicker } from './ComponentPicker';
 import { SettingsPanel } from './SettingsPanel';
 import { ImportComponentModal } from './ImportComponentModal';
 import { AnalyticsPanel } from './AnalyticsPanel';
+import { CollaborationIndicator } from './CollaborationIndicator';
 import { UserProfileDropdown } from '@/components/auth';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Project } from '@/types';
+import { useCollaboration } from '@/hooks/useCollaboration';
 
 interface EditorProps {
   projectId?: number;
@@ -43,8 +45,31 @@ export function Editor({ projectId }: EditorProps) {
   
   const { components: customComponents } = useCustomComponentsStore();
   const { fetchWithAuth } = useAuthStore();
+  
+  // Real-time collaboration
+  const lastUpdateRef = useRef<number>(0);
+  const {
+    isConnected,
+    activeUsers,
+    sendProjectUpdate,
+  } = projectId ? useCollaboration({
+    projectId,
+    onProjectUpdate: (changes, userId) => {
+      // Применяем изменения от других пользователей
+      // Помечаем, что это external update, чтобы не отправлять обратно
+      lastUpdateRef.current = Date.now();
+      // TODO: Применить changes к проекту
+      console.log('Received update from user:', userId, changes);
+    },
+    onUserJoined: (userId) => {
+      console.log('User joined:', userId);
+    },
+    onUserLeft: (userId) => {
+      console.log('User left:', userId);
+    },
+  }) : { isConnected: false, activeUsers: 0, sendProjectUpdate: () => {} };
 
-  // Автосохранение в БД каждые 3 секунды
+  // Автосохранение в БД каждые 3 секунды + отправка через WebSocket
   useEffect(() => {
     if (!projectId || !project) return;
 
@@ -57,6 +82,13 @@ export function Editor({ projectId }: EditorProps) {
             data: project,
           }),
         });
+        
+        // Отправляем изменения через WebSocket другим пользователям
+        // Проверяем, что это не external update (от другого пользователя)
+        const timeSinceLastExternalUpdate = Date.now() - lastUpdateRef.current;
+        if (timeSinceLastExternalUpdate > 1000) { // Если прошло больше секунды
+          sendProjectUpdate(project);
+        }
       } catch (error) {
         console.error('Auto-save error:', error);
       } finally {
@@ -65,7 +97,7 @@ export function Editor({ projectId }: EditorProps) {
     }, 3000); // Сохраняем каждые 3 секунды
 
     return () => clearInterval(interval);
-  }, [projectId, project]);
+  }, [projectId, project, sendProjectUpdate]);
 
   // Показываем загрузку пока ждём данные из localStorage
   if (!hydrated) {
@@ -178,22 +210,33 @@ export function Editor({ projectId }: EditorProps) {
           />
           <span className="font-semibold text-gray-900">Prototype Builder</span>
           
-          {/* Auto-save indicator */}
+          {/* Auto-save indicator & Collaboration status */}
           {projectId && (
-            <div className="flex items-center gap-2 text-sm text-gray-500">
-              {saving ? (
-                <>
-                  <div className="w-3 h-3 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
-                  <span>Сохранение...</span>
-                </>
-              ) : (
-                <>
-                  <svg className="w-3 h-3 text-green-600" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                  </svg>
-                  <span>Сохранено</span>
-                </>
-              )}
+            <div className="flex items-center gap-4">
+              {/* Collaboration indicator */}
+              <CollaborationIndicator 
+                isConnected={isConnected} 
+                activeUsers={activeUsers} 
+              />
+              
+              <div className="h-4 w-px bg-gray-200" />
+              
+              {/* Save status */}
+              <div className="flex items-center gap-2 text-sm text-gray-500">
+                {saving ? (
+                  <>
+                    <div className="w-3 h-3 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
+                    <span>Сохранение...</span>
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-3 h-3 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                    </svg>
+                    <span>Сохранено</span>
+                  </>
+                )}
+              </div>
             </div>
           )}
         </div>

@@ -4,3 +4,4 @@ export { Slot } from './Slot';
 export { ComponentPicker } from './ComponentPicker';
 export { ComponentRenderer } from './ComponentRenderer';
 export { SettingsPanel } from './SettingsPanel';
+export { CollaborationIndicator } from './CollaborationIndicator';

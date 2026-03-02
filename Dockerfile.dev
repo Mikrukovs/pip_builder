@@ -22,5 +22,5 @@ COPY . .
 # Открываем порт
 EXPOSE 3000
 
-# Запускаем npm install при старте, затем dev server
-CMD ["sh", "-c", "echo '=== Installing dependencies ===' && npm install && echo '=== Starting dev server ===' && npm run dev"]
+# Запускаем npm install при старте, затем dev server с WebSocket
+CMD ["sh", "-c", "echo '=== Installing dependencies ===' && npm install && echo '=== Starting dev server with WebSocket ===' && npm run dev"]

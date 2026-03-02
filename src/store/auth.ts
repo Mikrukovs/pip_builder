@@ -16,10 +16,12 @@ interface AuthState {
   user: User | null;
   token: string | null;
   isAuthenticated: boolean;
+  hydrated: boolean; // Флаг завершения гидратации из localStorage
   
   // Действия
   setAuth: (user: User, token: string) => void;
   logout: () => void;
+  setHydrated: () => void;
   
   // API helpers
   fetchWithAuth: (url: string, options?: RequestInit) => Promise<Response>;
@@ -31,6 +33,7 @@ export const useAuthStore = create<AuthState>()(
       user: null,
       token: null,
       isAuthenticated: false,
+      hydrated: false,
       
       setAuth: (user, token) => {
         set({ 
@@ -38,6 +41,10 @@ export const useAuthStore = create<AuthState>()(
           token,
           isAuthenticated: true 
         });
+      },
+      
+      setHydrated: () => {
+        set({ hydrated: true });
       },
       
       logout: () => {
@@ -88,6 +95,12 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: 'auth-storage',
+      onRehydrateStorage: () => {
+        return (state) => {
+          // Вызываем setHydrated после завершения гидратации
+          state?.setHydrated();
+        };
+      },
     }
   )
 );
