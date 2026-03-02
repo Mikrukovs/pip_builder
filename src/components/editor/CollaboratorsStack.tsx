@@ -106,11 +106,6 @@ export function CollaboratorsStack({ users, isConnected }: CollaboratorsStackPro
             </div>
           )}
         </div>
-
-        {/* Зеленая точка "онлайн" */}
-        <div className="ml-2 flex items-center gap-1.5">
-          <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-        </div>
       </button>
 
       {/* Дропдаун со списком пользователей */}
