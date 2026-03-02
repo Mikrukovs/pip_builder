@@ -39,6 +39,7 @@ export function HeatmapExport({ analytics, screen, screenName, onClose, embedded
   const [navbarHeight, setNavbarHeight] = useState(0);
   const [contentHeight, setContentHeight] = useState(400);
   const [stickyHeight, setStickyHeight] = useState(0);
+  const [fullContentHeight, setFullContentHeight] = useState(812); // Полная высота content области (viewport - navbar - sticky)
 
   // Получаем данные по зонам
   const zoneData: ZoneHeatmapData = analytics.heatmapData?.[screen.id] || emptyZoneData;
@@ -68,15 +69,19 @@ export function HeatmapExport({ analytics, screen, screenName, onClose, embedded
   // Измеряем размеры зон после рендера
   useEffect(() => {
     const timer = setTimeout(() => {
-      if (navbarRef.current) {
-        setNavbarHeight(navbarRef.current.offsetHeight);
-      }
-      if (contentRef.current) {
-        setContentHeight(contentRef.current.offsetHeight);
-      }
-      if (stickyRef.current) {
-        setStickyHeight(stickyRef.current.offsetHeight);
-      }
+      const navbar = navbarRef.current?.offsetHeight || 0;
+      const content = contentRef.current?.offsetHeight || 0;
+      const sticky = stickyRef.current?.offsetHeight || 0;
+      
+      setNavbarHeight(navbar);
+      setContentHeight(content);
+      setStickyHeight(sticky);
+      
+      // Полная высота content области = общая высота - navbar - sticky
+      // Минимум 812px (iPhone), но может быть больше если контента много
+      const containerHeight = Math.max(812, navbar + content + sticky);
+      setFullContentHeight(containerHeight - navbar - sticky);
+      
       setReady(true);
     }, 300);
     return () => clearTimeout(timer);
@@ -196,36 +201,37 @@ export function HeatmapExport({ analytics, screen, screenName, onClose, embedded
               </div>
             )}
 
-            {/* Зона: Основной контент — НЕ растягивается, heatmap по фактическому размеру */}
-            <div 
-              ref={contentRef} 
-              className="relative px-4 py-6 space-y-4 flex-shrink-0"
-            >
-              {otherSlots.map((slot: Slot) => (
-                slot.component && (
-                  <div key={slot.id} style={{ opacity: interfaceOpacity }}>
-                    <ComponentRenderer 
-                      config={slot.component}
-                      embeddedComponents={embeddedComponents}
-                    />
-                  </div>
-                )
-              ))}
-              {/* Heatmap для контента — абсолютно позиционирован поверх зоны */}
-              {ready && contentHeight > 0 && (zoneData.content.length > 0 || (isOldFormat && legacyPoints.length > 0)) && (
+            {/* Зона: Основной контент — обёртка для всей области (включая пустое пространство) */}
+            <div className="relative flex-1">
+              {/* Компоненты контента */}
+              <div 
+                ref={contentRef} 
+                className="px-4 py-6 space-y-4"
+              >
+                {otherSlots.map((slot: Slot) => (
+                  slot.component && (
+                    <div key={slot.id} style={{ opacity: interfaceOpacity }}>
+                      <ComponentRenderer 
+                        config={slot.component}
+                        embeddedComponents={embeddedComponents}
+                      />
+                    </div>
+                  )
+                ))}
+              </div>
+
+              {/* Heatmap для всей content области (включая пустое пространство) */}
+              {ready && fullContentHeight > 0 && (zoneData.content.length > 0 || (isOldFormat && legacyPoints.length > 0)) && (
                 <HeatmapCanvas
                   points={isOldFormat ? legacyPoints : zoneData.content}
                   width={PREVIEW_WIDTH}
-                  height={contentHeight}
+                  height={fullContentHeight}
                   radius={30}
                   blur={10}
                   showLabels={showLabels}
                 />
               )}
             </div>
-
-            {/* Пустое пространство — заполняет оставшееся место между контентом и sticky */}
-            <div className="flex-1" />
 
             {/* Зона: Sticky секция — прижата к низу */}
             {hasStickyContent && (

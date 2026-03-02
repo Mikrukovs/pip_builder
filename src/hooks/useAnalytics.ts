@@ -120,25 +120,57 @@ export function useAnalytics({ projectId, enabled = true }: UseAnalyticsOptions)
     const zoneElement = target.closest('[data-zone]') as HTMLElement | null;
     const zone: ClickZone = (zoneElement?.getAttribute('data-zone') as ClickZone) || 'content';
     
-    // Находим элемент зоны для расчёта координат
-    let zoneRef: HTMLElement | null = zoneElement;
-    
-    // Если зона не найдена, ищем content зону
-    if (!zoneRef && containerRef) {
-      zoneRef = containerRef.querySelector('[data-zone="content"]') as HTMLElement;
+    // Для navbar и sticky используем координаты относительно зоны
+    if (zone === 'navbar' || zone === 'sticky') {
+      if (!zoneElement) return;
+      
+      const rect = zoneElement.getBoundingClientRect();
+      const clickX = event.clientX - rect.left;
+      const clickY = event.clientY - rect.top;
+      
+      const x = clickX / rect.width;
+      const y = clickY / rect.height;
+
+      const click: ClickEvent = {
+        id: generateClickId(),
+        timestamp: Date.now(),
+        screenId: currentScreenRef.current || 'unknown',
+        zone,
+        x: Math.max(0, Math.min(1, x)),
+        y: Math.max(0, Math.min(1, y)),
+        absoluteX: clickX,
+        absoluteY: clickY,
+        componentId,
+        componentType,
+      };
+
+      sessionRef.current.clicks.push(click);
+      return;
     }
     
-    if (!zoneRef) return;
+    // Для content зоны используем координаты относительно ВСЕГО экрана (viewport)
+    // Это позволяет отображать клики даже в пустых областях
+    if (!containerRef) return;
     
-    const rect = zoneRef.getBoundingClientRect();
+    const containerRect = containerRef.getBoundingClientRect();
     
-    // Позиция клика относительно зоны
-    const clickX = event.clientX - rect.left;
-    const clickY = event.clientY - rect.top;
+    // Находим navbar и sticky для расчета области контента
+    const navbarElement = containerRef.querySelector('[data-zone="navbar"]') as HTMLElement | null;
+    const stickyElement = containerRef.querySelector('[data-zone="sticky"]') as HTMLElement | null;
     
-    // Нормализуем координаты относительно размера зоны
-    const x = clickX / rect.width;
-    const y = clickY / rect.height;
+    const navbarHeight = navbarElement?.offsetHeight || 0;
+    const stickyHeight = stickyElement?.offsetHeight || 0;
+    
+    // Высота области контента = высота контейнера - navbar - sticky
+    const contentAreaHeight = containerRect.height - navbarHeight - stickyHeight;
+    
+    // Позиция клика относительно начала content области
+    const clickX = event.clientX - containerRect.left;
+    const clickY = event.clientY - containerRect.top - navbarHeight;
+    
+    // Нормализуем координаты
+    const x = clickX / containerRect.width;
+    const y = clickY / contentAreaHeight;
 
     const click: ClickEvent = {
       id: generateClickId(),
