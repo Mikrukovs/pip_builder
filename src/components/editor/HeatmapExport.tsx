@@ -170,12 +170,12 @@ export function HeatmapExport({ analytics, screen, screenName, onClose, embedded
         <div className="flex-1 overflow-auto p-2 bg-gray-100 min-h-0">
           <div 
             ref={containerRef}
-            className="relative bg-white rounded-xl overflow-hidden shadow-lg mx-auto"
-            style={{ width: PREVIEW_WIDTH }}
+            className="relative bg-white rounded-xl overflow-hidden shadow-lg mx-auto flex flex-col"
+            style={{ width: PREVIEW_WIDTH, minHeight: 812 }}
           >
             {/* Зона: Навбар */}
             {hasNavbar && navbarSlot?.component && (
-              <div ref={navbarRef} className="relative bg-white">
+              <div ref={navbarRef} className="relative bg-white flex-shrink-0">
                 <div style={{ opacity: interfaceOpacity }}>
                   <ComponentRenderer 
                     config={navbarSlot.component}
@@ -196,10 +196,10 @@ export function HeatmapExport({ analytics, screen, screenName, onClose, embedded
               </div>
             )}
 
-            {/* Зона: Основной контент - структура должна точно совпадать с preview */}
+            {/* Зона: Основной контент — НЕ растягивается, heatmap по фактическому размеру */}
             <div 
               ref={contentRef} 
-              className="relative px-4 py-6 space-y-4"
+              className="relative px-4 py-6 space-y-4 flex-shrink-0"
             >
               {otherSlots.map((slot: Slot) => (
                 slot.component && (
@@ -224,9 +224,12 @@ export function HeatmapExport({ analytics, screen, screenName, onClose, embedded
               )}
             </div>
 
-            {/* Зона: Sticky секция - прижата к низу */}
+            {/* Пустое пространство — заполняет оставшееся место между контентом и sticky */}
+            <div className="flex-1" />
+
+            {/* Зона: Sticky секция — прижата к низу */}
             {hasStickyContent && (
-              <div ref={stickyRef} className="relative border-t border-gray-200 bg-white px-4 py-3 space-y-2">
+              <div ref={stickyRef} className="relative border-t border-gray-200 bg-white px-4 py-3 space-y-2 flex-shrink-0">
                 <div style={{ opacity: interfaceOpacity }} className="space-y-2">
                   {screen.stickySlots!.map((slot: Slot) => (
                     slot.component && (
