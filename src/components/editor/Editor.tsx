@@ -8,7 +8,7 @@ import { ComponentPicker } from './ComponentPicker';
 import { SettingsPanel } from './SettingsPanel';
 import { ImportComponentModal } from './ImportComponentModal';
 import { AnalyticsPanel } from './AnalyticsPanel';
-import { TelegramLogin, UserProfile } from '@/components/auth';
+import { UserProfileDropdown } from '@/components/auth';
 import { useState, useEffect } from 'react';
 import { Project } from '@/types';
 
@@ -199,7 +199,7 @@ export function Editor({ projectId }: EditorProps) {
         </div>
         
         <div className="flex items-center gap-3">
-          <UserProfile />
+          <UserProfileDropdown />
           
           <div className="h-6 w-px bg-gray-200" />
           
