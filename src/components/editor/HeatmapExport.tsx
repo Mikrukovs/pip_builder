@@ -170,12 +170,12 @@ export function HeatmapExport({ analytics, screen, screenName, onClose, embedded
         <div className="flex-1 overflow-auto p-2 bg-gray-100 min-h-0">
           <div 
             ref={containerRef}
-            className="relative bg-white rounded-xl overflow-hidden shadow-lg mx-auto flex flex-col"
-            style={{ width: PREVIEW_WIDTH, minHeight: 812 }} // Минимальная высота iPhone X/11/12, растягивается если контента больше
+            className="relative bg-white rounded-xl overflow-hidden shadow-lg mx-auto"
+            style={{ width: PREVIEW_WIDTH }}
           >
             {/* Зона: Навбар */}
             {hasNavbar && navbarSlot?.component && (
-              <div ref={navbarRef} className="relative bg-white flex-shrink-0">
+              <div ref={navbarRef} className="relative bg-white">
                 <div style={{ opacity: interfaceOpacity }}>
                   <ComponentRenderer 
                     config={navbarSlot.component}
@@ -196,10 +196,10 @@ export function HeatmapExport({ analytics, screen, screenName, onClose, embedded
               </div>
             )}
 
-            {/* Зона: Основной контент - структура должна совпадать с preview */}
+            {/* Зона: Основной контент - структура должна точно совпадать с preview */}
             <div 
               ref={contentRef} 
-              className="relative px-4 py-6 space-y-4 flex-1"
+              className="relative px-4 py-6 space-y-4"
             >
               {otherSlots.map((slot: Slot) => (
                 slot.component && (
@@ -211,7 +211,7 @@ export function HeatmapExport({ analytics, screen, screenName, onClose, embedded
                   </div>
                 )
               ))}
-              {/* Heatmap для контента */}
+              {/* Heatmap для контента — абсолютно позиционирован поверх зоны */}
               {ready && contentHeight > 0 && (zoneData.content.length > 0 || (isOldFormat && legacyPoints.length > 0)) && (
                 <HeatmapCanvas
                   points={isOldFormat ? legacyPoints : zoneData.content}
@@ -226,7 +226,7 @@ export function HeatmapExport({ analytics, screen, screenName, onClose, embedded
 
             {/* Зона: Sticky секция - прижата к низу */}
             {hasStickyContent && (
-              <div ref={stickyRef} className="relative border-t border-gray-200 bg-white px-4 py-3 space-y-2 flex-shrink-0">
+              <div ref={stickyRef} className="relative border-t border-gray-200 bg-white px-4 py-3 space-y-2">
                 <div style={{ opacity: interfaceOpacity }} className="space-y-2">
                   {screen.stickySlots!.map((slot: Slot) => (
                     slot.component && (
