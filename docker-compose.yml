@@ -1,7 +1,7 @@
 version: '3.8'
 
 services:
-  # Nginx Reverse Proxy
+  # Nginx Reverse Proxy (опционально, для Docker-only деплоя)
   nginx:
     image: nginx:alpine
     container_name: prototype-builder-nginx
@@ -12,6 +12,8 @@ services:
     depends_on:
       - app-dev
     restart: unless-stopped
+    profiles:
+      - nginx
     networks:
       - app-network
 
