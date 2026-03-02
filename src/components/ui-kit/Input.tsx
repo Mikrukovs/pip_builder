@@ -18,14 +18,16 @@ export function Input({ config, preview }: Props) {
   const inputRef = useRef<HTMLInputElement | HTMLButtonElement>(null);
   const inputId = useId();
   const formValidation = useFormValidation();
+  const registerInput = formValidation?.registerInput;
+  const unregisterInput = formValidation?.unregisterInput;
 
   // Регистрация/отмена регистрации инпута в контексте валидации
   useEffect(() => {
-    if (formValidation && preview) {
-      formValidation.registerInput(inputId, config.validation.enabled, inputRef);
-      return () => formValidation.unregisterInput(inputId);
+    if (registerInput && unregisterInput && preview) {
+      registerInput(inputId, config.validation.enabled, inputRef);
+      return () => unregisterInput(inputId);
     }
-  }, [formValidation, inputId, config.validation.enabled, preview]);
+  }, [registerInput, unregisterInput, inputId, config.validation.enabled, preview]);
 
   // Закрытие dropdown при клике вне
   useEffect(() => {
@@ -86,11 +88,12 @@ export function Input({ config, preview }: Props) {
   const { isValid, message } = validate();
 
   // Обновляем состояние валидации в контексте
+  const updateValidation = formValidation?.updateValidation;
   useEffect(() => {
-    if (formValidation && preview && config.validation.enabled) {
-      formValidation.updateValidation(inputId, isValid, touched);
+    if (updateValidation && preview && config.validation.enabled) {
+      updateValidation(inputId, isValid, touched);
     }
-  }, [formValidation, inputId, isValid, touched, preview, config.validation.enabled]);
+  }, [updateValidation, inputId, isValid, touched, preview, config.validation.enabled]);
 
   // Определяем вид инпута (для обратной совместимости)
   const variant = config.inputVariant || 'default';

@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState, useCallback, useRef, ReactNode, RefObject } from 'react';
+import { createContext, useContext, useState, useCallback, useRef, useMemo, ReactNode, RefObject } from 'react';
 
 interface InputRegistration {
   isValid: boolean | null;
@@ -74,15 +74,17 @@ export function FormValidationProvider({ children }: { children: ReactNode }) {
     return false;
   }, [validationState]);
 
+  const value = useMemo(() => ({
+    validationState,
+    registerInput,
+    unregisterInput,
+    updateValidation,
+    isFormValid,
+    focusFirstInvalid,
+  }), [validationState, registerInput, unregisterInput, updateValidation, isFormValid, focusFirstInvalid]);
+
   return (
-    <FormValidationContext.Provider value={{
-      validationState,
-      registerInput,
-      unregisterInput,
-      updateValidation,
-      isFormValid,
-      focusFirstInvalid,
-    }}>
+    <FormValidationContext.Provider value={value}>
       {children}
     </FormValidationContext.Provider>
   );

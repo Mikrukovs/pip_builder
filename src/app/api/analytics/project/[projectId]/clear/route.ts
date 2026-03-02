@@ -19,15 +19,17 @@ export async function DELETE(
     // Проверяем доступ к проекту только если это числовой ID (проект в БД)
     const numericProjectId = parseInt(projectId);
     if (!isNaN(numericProjectId)) {
-      const access = await prisma.projectCollaborator.findFirst({
-        where: {
-          projectId: numericProjectId,
-          userId: auth.userId,
-          role: 'owner', // Только owner может удалять аналитику
-        },
+      const project = await prisma.project.findUnique({
+        where: { id: numericProjectId },
+        select: { ownerId: true },
       });
 
-      if (!access) {
+      if (!project) {
+        return NextResponse.json({ error: 'Project not found' }, { status: 404 });
+      }
+
+      // Только владелец проекта может очищать аналитику
+      if (project.ownerId !== auth.userId) {
         return NextResponse.json({ error: 'Access denied' }, { status: 403 });
       }
     }
