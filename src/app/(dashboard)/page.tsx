@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useAuthStore } from '@/store/auth';
 import { useRouter } from 'next/navigation';
 import { generateUUID } from '@/utils/uuid';
-import { FolderShareModal } from '@/components/folders';
+import { FolderShareModal, FolderActionsMenu } from '@/components/folders';
 
 interface Folder {
   id: number;
@@ -176,69 +176,47 @@ export default function DashboardPage() {
                   key={folder.id}
                   className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow"
                 >
-                  <div 
-                    className="cursor-pointer"
-                    onClick={() => router.push(`/folders/${folder.id}`)}
-                  >
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex items-center gap-3 flex-1">
-                        <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                          <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
-                          </svg>
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <h3 className="font-semibold text-gray-900 truncate">{folder.name}</h3>
-                          <p className="text-sm text-gray-500">
-                            {folder._count.projects} {folder._count.projects === 1 ? 'проект' : 'проектов'}
-                          </p>
-                        </div>
+                  <div className="flex items-start justify-between mb-3">
+                    <div 
+                      className="flex items-center gap-3 flex-1 cursor-pointer"
+                      onClick={() => router.push(`/folders/${folder.id}`)}
+                    >
+                      <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+                        </svg>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-semibold text-gray-900 truncate">{folder.name}</h3>
+                        <p className="text-sm text-gray-500">
+                          {folder._count.projects} {folder._count.projects === 1 ? 'проект' : 'проектов'}
+                        </p>
                       </div>
                     </div>
-
-                    {/* Информация о владельце для shared папок */}
-                    {!isOwner && folder.owner && (
-                      <div className="mb-3 flex items-center gap-2 text-xs text-gray-600 bg-purple-50 px-2 py-1 rounded">
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                        </svg>
-                        <span>Владелец: {folder.owner.firstName} {folder.owner.lastName || ''}</span>
-                      </div>
-                    )}
+                    
+                    {/* Меню действий */}
+                    <FolderActionsMenu
+                      folderId={folder.id}
+                      folderName={folder.name}
+                      isOwner={isOwner}
+                      collaboratorsCount={folder._count.collaborators}
+                      onShare={() => setShareModalFolder({ id: folder.id, name: folder.name })}
+                      onDelete={() => deleteFolder(folder.id)}
+                    />
                   </div>
 
-                  {/* Действия */}
-                  <div className="flex items-center gap-2 pt-3 border-t border-gray-100">
-                    {isOwner && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setShareModalFolder({ id: folder.id, name: folder.name });
-                        }}
-                        className="flex-1 px-3 py-2 text-sm bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors flex items-center justify-center gap-2"
-                        title="Управление доступом"
-                      >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                        </svg>
-                        {folder._count.collaborators ? `${folder._count.collaborators} участников` : 'Поделиться'}
-                      </button>
-                    )}
-                    {isOwner && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          deleteFolder(folder.id);
-                        }}
-                        className="p-2 text-gray-400 hover:text-red-600 transition-colors"
-                        title="Удалить папку"
-                      >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
-                      </button>
-                    )}
-                  </div>
+                  {/* Информация о владельце для shared папок */}
+                  {!isOwner && folder.owner && (
+                    <div 
+                      className="flex items-center gap-2 text-xs text-gray-600 bg-purple-50 px-2 py-1 rounded cursor-pointer"
+                      onClick={() => router.push(`/folders/${folder.id}`)}
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                      </svg>
+                      <span>Владелец: {folder.owner.firstName} {folder.owner.lastName || ''}</span>
+                    </div>
+                  )}
                 </div>
               );
             })}

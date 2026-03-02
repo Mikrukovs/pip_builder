@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { requireAuth } from '@/lib/auth';
 
-// GET /api/folders/:id - Получить папку
+// GET /api/folders/:id - Получить папку (для владельца или коллаборатора)
 export async function GET(
   request: NextRequest,
   props: { params: Promise<{ id: string }> }
@@ -19,20 +19,42 @@ export async function GET(
       return NextResponse.json({ error: 'Invalid folder ID' }, { status: 400 });
     }
 
-    const folder = await prisma.folder.findFirst({
-      where: {
-        id: folderId,
-        ownerId: auth.userId,
-      },
+    // Ищем папку и проверяем доступ
+    const folder = await prisma.folder.findUnique({
+      where: { id: folderId },
       include: {
-        projects: {
-          orderBy: { updatedAt: 'desc' },
+        owner: {
+          select: {
+            id: true,
+            username: true,
+            firstName: true,
+            lastName: true,
+          },
+        },
+        collaborators: {
+          where: {
+            userId: auth.userId,
+          },
+          select: {
+            role: true,
+          },
+        },
+        _count: {
+          select: { collaborators: true },
         },
       },
     });
 
     if (!folder) {
       return NextResponse.json({ error: 'Folder not found' }, { status: 404 });
+    }
+
+    // Проверяем, что пользователь - владелец или коллаборатор
+    const isOwner = folder.ownerId === auth.userId;
+    const isCollaborator = folder.collaborators.length > 0;
+
+    if (!isOwner && !isCollaborator) {
+      return NextResponse.json({ error: 'Access denied' }, { status: 403 });
     }
 
     return NextResponse.json({ folder });

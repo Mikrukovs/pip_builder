@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { requireAuth } from '@/lib/auth';
 
-// GET /api/projects - Получить все проекты пользователя
+// GET /api/projects - Получить все проекты пользователя (опционально с фильтром по папке)
 export async function GET(request: NextRequest) {
   try {
     const auth = await requireAuth(request.headers.get('authorization'));
@@ -10,26 +10,49 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Получаем проекты где пользователь owner или collaborator
-    const projects = await prisma.project.findMany({
-      where: {
-        OR: [
-          // Проекты в папках пользователя
-          {
-            folder: {
-              ownerId: auth.userId,
-            },
+    // Проверяем, есть ли фильтр по папке
+    const searchParams = request.nextUrl.searchParams;
+    const folderIdParam = searchParams.get('folderId');
+    const folderId = folderIdParam ? parseInt(folderIdParam) : null;
+
+    let whereClause: any = {
+      OR: [
+        // Проекты в папках пользователя
+        {
+          folder: {
+            ownerId: auth.userId,
           },
-          // Проекты где пользователь collaborator
-          {
+        },
+        // Проекты в shared папках
+        {
+          folder: {
             collaborators: {
               some: {
                 userId: auth.userId,
               },
             },
           },
-        ],
-      },
+        },
+        // Проекты где пользователь collaborator
+        {
+          collaborators: {
+            some: {
+              userId: auth.userId,
+            },
+          },
+        },
+      ],
+    };
+
+    // Если указан folderId, добавляем фильтр
+    if (folderId) {
+      whereClause.AND = [
+        { folderId },
+      ];
+    }
+
+    const projects = await prisma.project.findMany({
+      where: whereClause,
       include: {
         folder: {
           select: {
