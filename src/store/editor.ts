@@ -19,10 +19,12 @@ interface EditorState {
   showComponentPicker: boolean;
   clipboard: ComponentProps | null; // Буфер обмена (компонент целиком)
   propsClipboard: Partial<ComponentProps> | null; // Буфер обмена (только свойства)
+  isSyncing: boolean; // Флаг синхронизации (для предотвращения повторной отправки)
   
   // Действия с проектом
   createProject: (name: string) => void;
   loadProject: (project: Project) => void;
+  syncProject: (project: Project) => void; // Синхронизация от других пользователей
   
   // Undo
   undo: () => void;
@@ -104,6 +106,7 @@ export const useEditorStore = create<EditorState>()(
       showComponentPicker: false,
       clipboard: null,
       propsClipboard: null,
+      isSyncing: false,
       
       // Сохранить текущее состояние в историю
       saveToHistory: () => {
@@ -155,6 +158,19 @@ export const useEditorStore = create<EditorState>()(
           selectedSlotId: null, 
           showComponentPicker: false 
         });
+      },
+
+      // Синхронизация проекта от других пользователей (без сброса UI)
+      syncProject: (project) => {
+        set({ 
+          project,
+          isSyncing: true,
+        });
+        
+        // Сбрасываем флаг синхронизации через небольшую задержку
+        setTimeout(() => {
+          set({ isSyncing: false });
+        }, 100);
       },
 
       // Страницы

@@ -45,6 +45,7 @@ export function Editor({ projectId }: EditorProps) {
   
   const { components: customComponents } = useCustomComponentsStore();
   const { fetchWithAuth } = useAuthStore();
+  const { syncProject } = useEditorStore();
   
   // Real-time collaboration
   const lastUpdateRef = useRef<number>(0);
@@ -56,10 +57,13 @@ export function Editor({ projectId }: EditorProps) {
     projectId,
     onProjectUpdate: (changes, userId) => {
       // Применяем изменения от других пользователей
-      // Помечаем, что это external update, чтобы не отправлять обратно
       lastUpdateRef.current = Date.now();
-      // TODO: Применить changes к проекту
-      console.log('Received update from user:', userId, changes);
+      console.log('Received update from user:', userId);
+      
+      // Синхронизируем проект (changes - это полный проект)
+      if (changes && typeof changes === 'object') {
+        syncProject(changes);
+      }
     },
     onUserJoined: (userId) => {
       console.log('User joined:', userId);
@@ -69,7 +73,7 @@ export function Editor({ projectId }: EditorProps) {
     },
   }) : { isConnected: false, activeUsers: 0, sendProjectUpdate: () => {} };
 
-  // Автосохранение в БД каждые 3 секунды + отправка через WebSocket
+  // Автосохранение в БД каждые 3 секунды
   useEffect(() => {
     if (!projectId || !project) return;
 
@@ -82,13 +86,6 @@ export function Editor({ projectId }: EditorProps) {
             data: project,
           }),
         });
-        
-        // Отправляем изменения через WebSocket другим пользователям
-        // Проверяем, что это не external update (от другого пользователя)
-        const timeSinceLastExternalUpdate = Date.now() - lastUpdateRef.current;
-        if (timeSinceLastExternalUpdate > 1000) { // Если прошло больше секунды
-          sendProjectUpdate(project);
-        }
       } catch (error) {
         console.error('Auto-save error:', error);
       } finally {
@@ -97,7 +94,31 @@ export function Editor({ projectId }: EditorProps) {
     }, 3000); // Сохраняем каждые 3 секунды
 
     return () => clearInterval(interval);
-  }, [projectId, project, sendProjectUpdate]);
+  }, [projectId, project, fetchWithAuth]);
+
+  // Отправка изменений через WebSocket с debounce
+  useEffect(() => {
+    if (!projectId || !project || !isConnected) return;
+
+    // Проверяем флаг синхронизации
+    const { isSyncing } = useEditorStore.getState();
+    if (isSyncing) {
+      return; // Не отправляем, если это внешнее обновление
+    }
+
+    // Debounce: отправляем изменения через 500мс после последнего изменения
+    const timeout = setTimeout(() => {
+      const timeSinceLastExternalUpdate = Date.now() - lastUpdateRef.current;
+      
+      // Не отправляем, если недавно получили обновление от другого пользователя
+      if (timeSinceLastExternalUpdate > 1000) {
+        console.log('Sending project update via WebSocket');
+        sendProjectUpdate(project);
+      }
+    }, 500);
+
+    return () => clearTimeout(timeout);
+  }, [projectId, project, isConnected, sendProjectUpdate]);
 
   // Показываем загрузку пока ждём данные из localStorage
   if (!hydrated) {
