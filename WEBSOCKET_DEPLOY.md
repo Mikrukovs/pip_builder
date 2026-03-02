@@ -1,5 +1,15 @@
 # Деплой WebSocket сервера на production
 
+## Быстрое решение проблемы
+
+Если вы видите ошибку `Cannot find module '/app/server.js'`, выполните на сервере:
+```bash
+cd ~/projects/pip_builder
+git pull origin dev
+docker-compose down
+docker-compose up -d postgres app-dev
+```
+
 ## Что изменилось
 
 1. Добавлен кастомный Node.js сервер (`server.js`) для поддержки WebSocket
@@ -30,16 +40,12 @@ git pull origin dev
 docker-compose down
 ```
 
-### 5. Установите новые зависимости
-Так как мы добавили socket.io, нужно пересобрать контейнер:
-```bash
-docker-compose build app-dev
-```
-
-### 6. Запустите контейнеры
+### 5. Запустите контейнеры с новой конфигурацией
 ```bash
 docker-compose up -d postgres app-dev
 ```
+
+Контейнер автоматически установит новые зависимости (socket.io) при старте.
 
 ### 7. Проверьте логи
 ```bash
@@ -48,8 +54,15 @@ docker-compose logs -f app-dev
 
 Вы должны увидеть строки:
 ```
+=== Installing dependencies ===
+added 19 packages...
 === Starting dev server with WebSocket ===
 > Ready on http://localhost:3000
+```
+
+**Примечание**: Если контейнер уже был запущен и вы видите ошибку "Cannot find module '/app/server.js'", просто перезапустите его:
+```bash
+docker-compose restart app-dev
 ```
 
 ## Проверка работы WebSocket
