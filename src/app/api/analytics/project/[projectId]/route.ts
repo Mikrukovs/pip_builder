@@ -19,18 +19,16 @@ export async function GET(
     // Проверяем доступ к проекту только если это числовой ID (проект в БД)
     const numericProjectId = parseInt(projectId);
     if (!isNaN(numericProjectId) && auth) {
-      // Проверяем: владелец, коллаборатор проекта или коллаборатор папки
       const project = await prisma.project.findUnique({
         where: { id: numericProjectId },
-        select: { ownerId: true, folderId: true },
+        select: { folderId: true },
       });
 
       if (!project) {
         return NextResponse.json({ error: 'Project not found' }, { status: 404 });
       }
 
-      const isOwner = project.ownerId === auth.userId;
-
+      // Проверяем: коллаборатор проекта (включая owner) или коллаборатор папки
       const isProjectCollaborator = await prisma.projectCollaborator.findFirst({
         where: { projectId: numericProjectId, userId: auth.userId },
       });
@@ -41,7 +39,7 @@ export async function GET(
           })
         : null;
 
-      if (!isOwner && !isProjectCollaborator && !isFolderCollaborator) {
+      if (!isProjectCollaborator && !isFolderCollaborator) {
         return NextResponse.json({ error: 'Access denied' }, { status: 403 });
       }
     }
