@@ -33,7 +33,7 @@ export function HeatmapExport({ analytics, screen, screenName, onClose, embedded
   const [exporting, setExporting] = useState(false);
   const [ready, setReady] = useState(false);
   const [showLabels, setShowLabels] = useState(false);
-  const [interfaceOpacity, setInterfaceOpacity] = useState(0.8);
+  const [heatmapOpacity, setHeatmapOpacity] = useState(0.8);
   
   // Размеры зон
   const [navbarHeight, setNavbarHeight] = useState(0);
@@ -158,16 +158,16 @@ export function HeatmapExport({ analytics, screen, screenName, onClose, embedded
             </label>
           </div>
           <div className="flex items-center gap-3">
-            <span className="text-xs text-gray-600 whitespace-nowrap">Прозрачность</span>
+            <span className="text-xs text-gray-600 whitespace-nowrap">Прозрачность карты</span>
             <input
               type="range"
               min="0"
               max="100"
-              value={interfaceOpacity * 100}
-              onChange={(e) => setInterfaceOpacity(Number(e.target.value) / 100)}
+              value={heatmapOpacity * 100}
+              onChange={(e) => setHeatmapOpacity(Number(e.target.value) / 100)}
               className="flex-1 h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-purple-600"
             />
-            <span className="text-xs text-gray-500 w-8 text-right">{Math.round(interfaceOpacity * 100)}%</span>
+            <span className="text-xs text-gray-500 w-8 text-right">{Math.round(heatmapOpacity * 100)}%</span>
           </div>
         </div>
 
@@ -181,12 +181,10 @@ export function HeatmapExport({ analytics, screen, screenName, onClose, embedded
             {/* Зона: Навбар */}
             {hasNavbar && navbarSlot?.component && (
               <div ref={navbarRef} className="relative bg-white flex-shrink-0">
-                <div style={{ opacity: interfaceOpacity }}>
-                  <ComponentRenderer 
-                    config={navbarSlot.component}
-                    embeddedComponents={embeddedComponents}
-                  />
-                </div>
+                <ComponentRenderer 
+                  config={navbarSlot.component}
+                  embeddedComponents={embeddedComponents}
+                />
                 {/* Heatmap для навбара */}
                 {ready && navbarHeight > 0 && zoneData.navbar.length > 0 && (
                   <HeatmapCanvas
@@ -196,6 +194,7 @@ export function HeatmapExport({ analytics, screen, screenName, onClose, embedded
                     radius={25}
                     blur={8}
                     showLabels={showLabels}
+                    opacity={heatmapOpacity}
                   />
                 )}
               </div>
@@ -210,7 +209,7 @@ export function HeatmapExport({ analytics, screen, screenName, onClose, embedded
               >
                 {otherSlots.map((slot: Slot) => (
                   slot.component && (
-                    <div key={slot.id} style={{ opacity: interfaceOpacity }}>
+                    <div key={slot.id}>
                       <ComponentRenderer 
                         config={slot.component}
                         embeddedComponents={embeddedComponents}
@@ -229,6 +228,7 @@ export function HeatmapExport({ analytics, screen, screenName, onClose, embedded
                   radius={30}
                   blur={10}
                   showLabels={showLabels}
+                  opacity={heatmapOpacity}
                 />
               )}
             </div>
@@ -236,7 +236,7 @@ export function HeatmapExport({ analytics, screen, screenName, onClose, embedded
             {/* Зона: Sticky секция — прижата к низу */}
             {hasStickyContent && (
               <div ref={stickyRef} className="relative border-t border-gray-200 bg-white px-4 py-3 space-y-2 flex-shrink-0">
-                <div style={{ opacity: interfaceOpacity }} className="space-y-2">
+                <div className="space-y-2">
                   {screen.stickySlots!.map((slot: Slot) => (
                     slot.component && (
                       <div key={slot.id}>
@@ -257,6 +257,7 @@ export function HeatmapExport({ analytics, screen, screenName, onClose, embedded
                     radius={25}
                     blur={8}
                     showLabels={showLabels}
+                    opacity={heatmapOpacity}
                   />
                 )}
               </div>

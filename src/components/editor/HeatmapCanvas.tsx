@@ -16,6 +16,7 @@ interface HeatmapCanvasProps {
   blur?: number; // Размытие
   showLabels?: boolean; // Показывать числа кликов
   globalMaxIntensity?: number; // Максимум кликов для относительной шкалы
+  opacity?: number; // Прозрачность тепловой карты (0-1)
 }
 
 export function HeatmapCanvas({ 
@@ -26,6 +27,7 @@ export function HeatmapCanvas({
   blur = 15,
   showLabels = false,
   globalMaxIntensity,
+  opacity = 1,
 }: HeatmapCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -82,7 +84,8 @@ export function HeatmapCanvas({
         data[i] = r;     // R
         data[i + 1] = g; // G
         data[i + 2] = b; // B
-        data[i + 3] = Math.min(alpha * 1.5, 220); // Немного увеличиваем видимость
+        // Применяем глобальную прозрачность к альфа-каналу
+        data[i + 3] = Math.min(alpha * 1.5 * opacity, 220 * opacity);
       }
     }
 
@@ -95,7 +98,7 @@ export function HeatmapCanvas({
       ctx.filter = 'none';
     }
 
-  }, [points, width, height, radius, blur, globalMaxIntensity]);
+  }, [points, width, height, radius, blur, globalMaxIntensity, opacity]);
 
   if (points.length === 0) {
     return null;
