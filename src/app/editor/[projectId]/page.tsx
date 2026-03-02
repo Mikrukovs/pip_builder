@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/auth';
 import { useEditorStore } from '@/store/editor';
 import { Editor } from '@/components/editor';
+import { AccessDenied } from '@/components/editor/AccessDenied';
 
 export default function EditorPage() {
   const params = useParams();
@@ -13,6 +14,8 @@ export default function EditorPage() {
   const { loadProject } = useEditorStore();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [accessDenied, setAccessDenied] = useState(false);
+  const [projectName, setProjectName] = useState<string>('');
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -27,6 +30,7 @@ export default function EditorPage() {
     try {
       setLoading(true);
       setError(null);
+      setAccessDenied(false);
       
       const res = await fetchWithAuth(`/api/projects/${params.projectId}`);
       
@@ -34,7 +38,10 @@ export default function EditorPage() {
         if (res.status === 404) {
           setError('Проект не найден');
         } else if (res.status === 403) {
-          setError('Нет доступа к проекту');
+          // Показываем страницу запроса доступа
+          const data = await res.json().catch(() => ({}));
+          setProjectName(data.projectName || '');
+          setAccessDenied(true);
         } else {
           setError('Ошибка загрузки проекта');
         }
@@ -45,6 +52,7 @@ export default function EditorPage() {
       
       // Загружаем проект в редактор
       if (data.project) {
+        setProjectName(data.project.name || '');
         loadProject(data.project.data);
       }
     } catch (error) {
@@ -67,6 +75,15 @@ export default function EditorPage() {
           <span className="text-sm text-gray-500">Загрузка проекта...</span>
         </div>
       </div>
+    );
+  }
+
+  if (accessDenied) {
+    return (
+      <AccessDenied
+        projectId={parseInt(params.projectId as string)}
+        projectName={projectName}
+      />
     );
   }
 

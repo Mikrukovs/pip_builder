@@ -60,6 +60,14 @@ export async function GET(request: NextRequest) {
             name: true,
           },
         },
+        collaborators: {
+          where: {
+            userId: auth.userId,
+          },
+          select: {
+            role: true,
+          },
+        },
         _count: {
           select: { collaborators: true },
         },
@@ -67,7 +75,14 @@ export async function GET(request: NextRequest) {
       orderBy: { updatedAt: 'desc' },
     });
 
-    return NextResponse.json({ projects });
+    // Добавляем userRole к каждому проекту
+    const projectsWithRole = projects.map(project => ({
+      ...project,
+      userRole: project.collaborators[0]?.role || null,
+      collaborators: undefined, // Убираем из ответа
+    }));
+
+    return NextResponse.json({ projects: projectsWithRole });
   } catch (error) {
     console.error('Get projects error:', error);
     return NextResponse.json(

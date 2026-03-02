@@ -74,10 +74,24 @@ export async function GET(
       return NextResponse.json({ error: 'Invalid project ID' }, { status: 400 });
     }
 
+    // Получаем проект для проверки существования
+    const projectExists = await prisma.project.findUnique({
+      where: { id: projectId },
+      select: { id: true, name: true },
+    });
+
+    if (!projectExists) {
+      return NextResponse.json({ error: 'Project not found' }, { status: 404 });
+    }
+
     // Проверяем доступ
     const access = await checkProjectAccess(projectId, auth.userId);
     if (!access) {
-      return NextResponse.json({ error: 'Project not found or access denied' }, { status: 404 });
+      // Возвращаем 403 с названием проекта для страницы запроса доступа
+      return NextResponse.json(
+        { error: 'Access denied', projectName: projectExists.name },
+        { status: 403 }
+      );
     }
 
     const project = await prisma.project.findUnique({

@@ -29,6 +29,7 @@ interface Project {
   name: string;
   folderId: number | null;
   updatedAt: string;
+  userRole?: string | null;
   folder: {
     id: number;
     name: string;
@@ -258,7 +259,7 @@ export default function DashboardPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {projects.slice(0, 6).map((project) => {
-              const isOwner = project.ownerId === user?.id;
+              const isOwner = project.userRole === 'owner';
               
               return (
                 <div

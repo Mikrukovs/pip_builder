@@ -32,6 +32,7 @@ model User {
   folderAccess     FolderCollaborator[]
   projectAccess    ProjectCollaborator[]
   projectHistory   ProjectHistory[]
+  accessRequests   AccessRequest[]
 
   @@map("users")
 }
@@ -85,6 +86,7 @@ model Project {
   collaborators  ProjectCollaborator[]
   history        ProjectHistory[]
   sharedLinks    SharedProject[]
+  accessRequests AccessRequest[]
 
   @@index([folderId])
   @@map("projects")
@@ -155,4 +157,25 @@ model AnalyticsSession {
   
   @@index([projectId])
   @@map("analytics_sessions")
+}
+
+// Запросы доступа к проектам
+model AccessRequest {
+  id        Int      @id @default(autoincrement())
+  projectId Int      @map("project_id")
+  userId    Int      @map("user_id")
+  status    String   @default("pending") @db.VarChar(20) // pending, approved, rejected
+  message   String?  @db.Text // Сообщение от пользователя
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Связи
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, userId])
+  @@index([projectId])
+  @@index([userId])
+  @@index([status])
+  @@map("access_requests")
 }
