@@ -5,6 +5,7 @@ import { useAuthStore } from '@/store/auth';
 import { useRouter } from 'next/navigation';
 import { generateUUID } from '@/utils/uuid';
 import { FolderShareModal, FolderActionsMenu } from '@/components/folders';
+import { ProjectActionsMenu, ProjectShareModal, ProjectMoveModal } from '@/components/projects';
 
 interface Folder {
   id: number;
@@ -49,6 +50,10 @@ export default function DashboardPage() {
   const [newProjectName, setNewProjectName] = useState('');
   const [selectedFolderId, setSelectedFolderId] = useState<number | null>(null);
   const [shareModalFolder, setShareModalFolder] = useState<{ id: number; name: string } | null>(null);
+  
+  // Project actions
+  const [shareModalProject, setShareModalProject] = useState<{ id: number; name: string } | null>(null);
+  const [moveModalProject, setMoveModalProject] = useState<{ id: number; name: string; folderId: number | null } | null>(null);
 
   useEffect(() => {
     loadData();
@@ -140,6 +145,22 @@ export default function DashboardPage() {
       }
     } catch (error) {
       console.error('Delete folder error:', error);
+    }
+  }
+
+  async function deleteProject(id: number) {
+    if (!confirm('Удалить проект?')) return;
+
+    try {
+      const res = await fetchWithAuth(`/api/projects/${id}`, {
+        method: 'DELETE',
+      });
+
+      if (res.ok) {
+        loadData();
+      }
+    } catch (error) {
+      console.error('Delete project error:', error);
     }
   }
 
@@ -236,26 +257,42 @@ export default function DashboardPage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {projects.slice(0, 6).map((project) => (
-              <div
-                key={project.id}
-                className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow cursor-pointer"
-                onClick={() => router.push(`/editor/${project.id}`)}
-              >
-                <h3 className="font-semibold text-gray-900 mb-2">{project.name}</h3>
-                <div className="flex items-center gap-2 text-sm text-gray-500">
-                  {project.folder && (
-                    <span className="px-2 py-1 bg-gray-100 rounded">
-                      {project.folder.name}
-                    </span>
-                  )}
-                  <span>{project._count.collaborators} участников</span>
+            {projects.slice(0, 6).map((project) => {
+              const isOwner = project.ownerId === user?.id;
+              
+              return (
+                <div
+                  key={project.id}
+                  className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow cursor-pointer relative"
+                  onClick={() => router.push(`/editor/${project.id}`)}
+                >
+                  {/* Actions menu */}
+                  <div className="absolute top-4 right-4">
+                    <ProjectActionsMenu
+                      projectId={project.id}
+                      projectName={project.name}
+                      isOwner={isOwner}
+                      onShare={() => setShareModalProject({ id: project.id, name: project.name })}
+                      onMove={() => setMoveModalProject({ id: project.id, name: project.name, folderId: project.folderId })}
+                      onDelete={() => deleteProject(project.id)}
+                    />
+                  </div>
+
+                  <h3 className="font-semibold text-gray-900 mb-2 pr-8">{project.name}</h3>
+                  <div className="flex items-center gap-2 text-sm text-gray-500">
+                    {project.folder && (
+                      <span className="px-2 py-1 bg-gray-100 rounded">
+                        {project.folder.name}
+                      </span>
+                    )}
+                    <span>{project._count.collaborators} участников</span>
+                  </div>
+                  <p className="text-xs text-gray-400 mt-2">
+                    Обновлено {new Date(project.updatedAt).toLocaleDateString()}
+                  </p>
                 </div>
-                <p className="text-xs text-gray-400 mt-2">
-                  Обновлено {new Date(project.updatedAt).toLocaleDateString()}
-                </p>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </div>
@@ -344,6 +381,29 @@ export default function DashboardPage() {
           folderName={shareModalFolder.name}
           isOpen={!!shareModalFolder}
           onClose={() => setShareModalFolder(null)}
+        />
+      )}
+
+      {/* Project Share Modal */}
+      {shareModalProject && (
+        <ProjectShareModal
+          projectId={shareModalProject.id}
+          projectName={shareModalProject.name}
+          onClose={() => setShareModalProject(null)}
+        />
+      )}
+
+      {/* Project Move Modal */}
+      {moveModalProject && (
+        <ProjectMoveModal
+          projectId={moveModalProject.id}
+          projectName={moveModalProject.name}
+          currentFolderId={moveModalProject.folderId}
+          onClose={() => setMoveModalProject(null)}
+          onMoved={() => {
+            loadData();
+            setMoveModalProject(null);
+          }}
         />
       )}
     </div>
