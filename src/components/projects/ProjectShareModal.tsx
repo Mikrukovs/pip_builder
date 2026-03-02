@@ -24,7 +24,7 @@ interface Collaborator {
 }
 
 export function ProjectShareModal({ projectId, projectName, onClose }: ProjectShareModalProps) {
-  const { fetchWithAuth } = useAuthStore();
+  const { fetchWithAuth, user } = useAuthStore();
   const [collaborators, setCollaborators] = useState<Collaborator[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<any[]>([]);
@@ -192,17 +192,26 @@ export function ProjectShareModal({ projectId, projectName, onClose }: ProjectSh
                     </div>
                   )}
                   <div>
-                    <div className="font-medium">{collab.user.firstName} {collab.user.lastName || ''}</div>
+                    <div className="font-medium">
+                      {collab.user.firstName} {collab.user.lastName || ''}
+                      {collab.role === 'owner' && (
+                        <span className="ml-2 text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded">
+                          Владелец
+                        </span>
+                      )}
+                    </div>
                     <div className="text-sm text-gray-500">@{collab.user.username}</div>
                   </div>
                 </div>
-                <button
-                  onClick={() => removeCollaborator(collab.userId)}
-                  disabled={loading}
-                  className="text-red-600 hover:text-red-700 text-sm disabled:opacity-50"
-                >
-                  Удалить
-                </button>
+                {collab.role !== 'owner' && collab.userId !== user?.id && (
+                  <button
+                    onClick={() => removeCollaborator(collab.userId)}
+                    disabled={loading}
+                    className="text-red-600 hover:text-red-700 text-sm disabled:opacity-50"
+                  >
+                    Удалить
+                  </button>
+                )}
               </div>
             ))}
             {collaborators.length === 0 && (

@@ -41,6 +41,20 @@ export async function DELETE(
       return NextResponse.json({ error: 'Only owner can remove collaborators' }, { status: 403 });
     }
 
+    // Проверяем, что удаляемый пользователь не owner
+    const targetCollaborator = await prisma.projectCollaborator.findUnique({
+      where: {
+        projectId_userId: {
+          projectId,
+          userId: targetUserId,
+        },
+      },
+    });
+
+    if (targetCollaborator?.role === 'owner') {
+      return NextResponse.json({ error: 'Cannot remove project owner' }, { status: 400 });
+    }
+
     // Удаляем коллаборатора
     await prisma.projectCollaborator.delete({
       where: {

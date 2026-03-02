@@ -29,7 +29,7 @@ export function FolderShareModal({
   isOpen,
   onClose,
 }: FolderShareModalProps) {
-  const { fetchWithAuth } = useAuthStore();
+  const { fetchWithAuth, user } = useAuthStore();
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<User[]>([]);
   const [collaborators, setCollaborators] = useState<Collaborator[]>([]);
@@ -295,15 +295,17 @@ export function FolderShareModal({
                     <span className="text-xs font-medium text-gray-600 bg-gray-100 px-2 py-1 rounded">
                       {collab.role === 'editor' ? 'Редактор' : 'Просмотр'}
                     </span>
-                    <button
-                      onClick={() => removeCollaborator(collab.id)}
-                      className="text-red-600 hover:text-red-700 p-1"
-                      title="Удалить доступ"
-                    >
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                      </svg>
-                    </button>
+                    {collab.id !== user?.id && (
+                      <button
+                        onClick={() => removeCollaborator(collab.id)}
+                        className="text-red-600 hover:text-red-700 p-1"
+                        title="Удалить доступ"
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    )}
                   </div>
                 </div>
               ))}
