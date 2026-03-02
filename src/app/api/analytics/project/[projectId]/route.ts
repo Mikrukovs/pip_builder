@@ -16,9 +16,11 @@ export async function GET(
     const params = await props.params;
     const projectId = params.projectId;
 
-    // Проверяем доступ к проекту только если это числовой ID (проект в БД)
+    // Проверяем доступ к проекту
     const numericProjectId = parseInt(projectId);
-    if (!isNaN(numericProjectId) && auth) {
+    
+    if (!isNaN(numericProjectId)) {
+      // Числовой ID - проверяем через ProjectCollaborator и FolderCollaborator
       const project = await prisma.project.findUnique({
         where: { id: numericProjectId },
         select: { folderId: true },
@@ -42,8 +44,40 @@ export async function GET(
       if (!isProjectCollaborator && !isFolderCollaborator) {
         return NextResponse.json({ error: 'Access denied' }, { status: 403 });
       }
+    } else {
+      // CUID (shareId) - проверяем через SharedProject
+      const sharedProject = await prisma.sharedProject.findUnique({
+        where: { id: projectId },
+        include: {
+          project: {
+            include: {
+              collaborators: {
+                where: { userId: auth.userId },
+              },
+              folder: {
+                include: {
+                  collaborators: {
+                    where: { userId: auth.userId },
+                  },
+                },
+              },
+            },
+          },
+        },
+      });
+
+      if (!sharedProject) {
+        return NextResponse.json({ error: 'Project not found' }, { status: 404 });
+      }
+
+      // Проверяем доступ: коллаборатор проекта или коллаборатор папки
+      const hasProjectAccess = sharedProject.project.collaborators.length > 0;
+      const hasFolderAccess = sharedProject.project.folder?.collaborators.length ?? 0 > 0;
+
+      if (!hasProjectAccess && !hasFolderAccess) {
+        return NextResponse.json({ error: 'Access denied' }, { status: 403 });
+      }
     }
-    // Если projectId это shareId (строка), доступ проверять не нужно
 
     // Получаем все сессии для проекта
     const sessions = await prisma.analyticsSession.findMany({

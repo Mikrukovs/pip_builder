@@ -16,10 +16,12 @@ export async function DELETE(
     const params = await props.params;
     const projectId = params.projectId;
 
-    // Проверяем доступ к проекту только если это числовой ID (проект в БД)
+    // Проверяем доступ к проекту
     const numericProjectId = parseInt(projectId);
+    
     if (!isNaN(numericProjectId)) {
-      // Только владелец (role: 'owner' в ProjectCollaborator) может очищать аналитику
+      // Числовой ID - проверяем через ProjectCollaborator
+      // Только владелец (role: 'owner') может очищать аналитику
       const ownerAccess = await prisma.projectCollaborator.findFirst({
         where: {
           projectId: numericProjectId,
@@ -29,6 +31,27 @@ export async function DELETE(
       });
 
       if (!ownerAccess) {
+        return NextResponse.json({ error: 'Access denied' }, { status: 403 });
+      }
+    } else {
+      // CUID (shareId) - проверяем через SharedProject
+      const sharedProject = await prisma.sharedProject.findUnique({
+        where: { id: projectId },
+        include: {
+          project: {
+            include: {
+              collaborators: {
+                where: {
+                  userId: auth.userId,
+                  role: 'owner',
+                },
+              },
+            },
+          },
+        },
+      });
+
+      if (!sharedProject || sharedProject.project.collaborators.length === 0) {
         return NextResponse.json({ error: 'Access denied' }, { status: 403 });
       }
     }
