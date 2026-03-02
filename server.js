@@ -52,25 +52,44 @@ app.prepare().then(() => {
     }
   });
 
+  // Функция для получения уникальных пользователей в комнате
+  const getUsersInRoom = (roomName) => {
+    const socketsInRoom = io.sockets.adapter.rooms.get(roomName);
+    if (!socketsInRoom) return [];
+    
+    const userMap = new Map();
+    
+    // Собираем уникальных пользователей
+    for (const socketId of socketsInRoom) {
+      const socket = io.sockets.sockets.get(socketId);
+      if (socket && socket.userId && socket.userInfo) {
+        userMap.set(socket.userId, socket.userInfo);
+      }
+    }
+    
+    return Array.from(userMap.values());
+  };
+
   // Обработка подключений
   io.on('connection', (socket) => {
     console.log('User connected:', socket.userId);
 
     // Присоединение к комнате проекта
-    socket.on('join-project', (projectId) => {
+    socket.on('join-project', (data) => {
+      const { projectId, userInfo } = data;
       const roomName = `project:${projectId}`;
+      
+      // Сохраняем информацию о пользователе
+      socket.userInfo = userInfo;
+      
       socket.join(roomName);
-      console.log(`User ${socket.userId} joined project ${projectId}`);
+      console.log(`User ${socket.userId} (${userInfo.firstName}) joined project ${projectId}`);
       
-      // Уведомляем других о новом участнике
-      socket.to(roomName).emit('user-joined', {
-        userId: socket.userId,
-      });
+      // Получаем список всех пользователей в комнате
+      const usersInRoom = getUsersInRoom(roomName);
       
-      // Отправляем список активных пользователей в комнате
-      const socketsInRoom = io.sockets.adapter.rooms.get(roomName);
-      const activeUsers = socketsInRoom ? Array.from(socketsInRoom) : [];
-      socket.emit('active-users', { users: activeUsers.length });
+      // Отправляем всем в комнате обновленный список пользователей
+      io.to(roomName).emit('users-update', { users: usersInRoom });
     });
 
     // Покидание комнаты проекта
@@ -79,9 +98,9 @@ app.prepare().then(() => {
       socket.leave(roomName);
       console.log(`User ${socket.userId} left project ${projectId}`);
       
-      socket.to(roomName).emit('user-left', {
-        userId: socket.userId,
-      });
+      // Отправляем обновленный список пользователей
+      const usersInRoom = getUsersInRoom(roomName);
+      io.to(roomName).emit('users-update', { users: usersInRoom });
     });
 
     // Изменения в проекте
@@ -130,6 +149,13 @@ app.prepare().then(() => {
 
     socket.on('disconnect', () => {
       console.log('User disconnected:', socket.userId);
+      
+      // Находим все комнаты, в которых был пользователь, и обновляем списки
+      const rooms = Array.from(socket.rooms).filter(room => room.startsWith('project:'));
+      rooms.forEach(roomName => {
+        const usersInRoom = getUsersInRoom(roomName);
+        io.to(roomName).emit('users-update', { users: usersInRoom });
+      });
     });
   });
 
