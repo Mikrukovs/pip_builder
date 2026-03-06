@@ -38,7 +38,7 @@ export function Navbar({ config, preview, onNavigate, onBack, renderComponent }:
     <>
       <div className="relative flex items-center justify-between h-14 px-4 bg-white border-b border-gray-200">
         {/* Левая часть - кнопка назад */}
-        <div className="flex-1 flex items-center">
+        <div className="flex items-center flex-shrink-0">
           {config.backButton.show && (
             <button
               onClick={handleBackClick}
@@ -56,20 +56,20 @@ export function Navbar({ config, preview, onNavigate, onBack, renderComponent }:
           )}
         </div>
 
-        {/* Центральная часть - заголовок */}
-        <div className="flex-1 flex flex-col items-center justify-center min-w-0">
-          <span className="font-semibold text-gray-900 truncate max-w-full">
+        {/* Центральная часть - заголовок (расширенная область) */}
+        <div className="flex-1 flex flex-col items-center justify-center min-w-0 px-4">
+          <span className="font-semibold text-gray-900 truncate w-full text-center">
             {config.title}
           </span>
           {config.showSubtitle && config.subtitle && (
-            <span className="text-xs text-gray-500 truncate max-w-full">
+            <span className="text-xs text-gray-500 truncate w-full text-center">
               {config.subtitle}
             </span>
           )}
         </div>
 
         {/* Правая часть - кнопка меню */}
-        <div className="flex-1 flex items-center justify-end">
+        <div className="flex items-center justify-end flex-shrink-0">
           {config.menu.show ? (
             <button
               onClick={() => preview && setSheetOpen(true)}
