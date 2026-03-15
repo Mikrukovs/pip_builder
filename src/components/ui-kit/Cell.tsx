@@ -177,8 +177,8 @@ export function Cell({ config, preview, onNavigate }: Props) {
     return (
       <label 
         htmlFor={radioId}
-        className={`flex items-center gap-3 p-3 bg-white rounded-xl border border-gray-200 transition-colors ${
-          isRadioClickable ? 'cursor-pointer hover:border-gray-300 active:bg-gray-50' : ''
+        className={`flex items-center gap-3 p-3 bg-white rounded-xl transition-colors ${
+          isRadioClickable ? 'cursor-pointer hover:bg-gray-50 active:bg-gray-100' : ''
         }`}
       >
         {shouldShowIcon && renderIcon()}
@@ -192,8 +192,8 @@ export function Cell({ config, preview, onNavigate }: Props) {
 
   return (
     <div 
-      className={`flex items-center gap-3 p-3 bg-white rounded-xl border border-gray-200 transition-colors ${
-        isClickable ? 'cursor-pointer hover:border-gray-300 active:bg-gray-50' : ''
+      className={`flex items-center gap-3 p-3 bg-white rounded-xl transition-colors ${
+        isClickable ? 'cursor-pointer hover:bg-gray-50 active:bg-gray-100' : ''
       }`}
       onClick={handleClick}
     >
