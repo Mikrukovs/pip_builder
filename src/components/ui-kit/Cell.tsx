@@ -177,7 +177,7 @@ export function Cell({ config, preview, onNavigate }: Props) {
     return (
       <label 
         htmlFor={radioId}
-        className={`flex items-center gap-3 p-3 bg-white rounded-xl transition-colors ${
+        className={`flex items-center gap-3 px-3 py-2.5 bg-white rounded-xl transition-colors ${
           isRadioClickable ? 'cursor-pointer hover:bg-gray-50 active:bg-gray-100' : ''
         }`}
       >
@@ -192,7 +192,7 @@ export function Cell({ config, preview, onNavigate }: Props) {
 
   return (
     <div 
-      className={`flex items-center gap-3 p-3 bg-white rounded-xl transition-colors ${
+      className={`flex items-center gap-3 px-3 py-2.5 bg-white rounded-xl transition-colors ${
         isClickable ? 'cursor-pointer hover:bg-gray-50 active:bg-gray-100' : ''
       }`}
       onClick={handleClick}
