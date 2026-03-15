@@ -275,7 +275,7 @@ export function FolderShareModal({
               {collaborators.map((collab) => (
                 <div
                   key={collab.id}
-                  className="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:border-gray-300 transition-colors"
+                  className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
                 >
                   <div className="flex items-center gap-3">
                     {collab.photoUrl ? (

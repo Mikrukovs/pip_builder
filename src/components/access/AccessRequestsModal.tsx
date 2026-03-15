@@ -157,7 +157,7 @@ export function AccessRequestsModal({ onClose }: AccessRequestsModalProps) {
               {requests.map((request) => (
                 <div
                   key={request.id}
-                  className="bg-gray-50 rounded-lg p-4 border border-gray-200"
+                  className="bg-gray-50 rounded-lg p-4"
                 >
                   <div className="flex items-start gap-3">
                     {/* Avatar */}

@@ -344,8 +344,8 @@ export function Input({ config, preview, onNavigate }: Props) {
                       onNavigate(cell.targetScreenId);
                     }
                   }}
-                  className="w-full flex items-center gap-3 p-3 bg-white rounded-lg border border-gray-200 
-                             hover:border-gray-300 transition-colors text-left"
+                  className="w-full flex items-center gap-3 p-3 bg-white rounded-lg 
+                             hover:bg-gray-50 active:bg-gray-100 transition-colors text-left"
                 >
                   {/* Иконка */}
                   {cell.icon ? (
