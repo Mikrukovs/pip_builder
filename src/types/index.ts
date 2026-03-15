@@ -8,6 +8,7 @@ export type ComponentType =
   | 'image'
   | 'cell'
   | 'navbar'
+  | 'tabs'
   | 'custom'; // Кастомные импортированные компоненты
 
 // Базовые настройки для каждого типа компонента
@@ -34,6 +35,24 @@ export interface ButtonProps {
   requireValidation?: boolean;
 }
 
+// Ячейка для inline search результатов
+export interface SearchCell {
+  id: string;
+  icon: string;
+  title: string;
+  subtitle: string;
+  showSubtitle: boolean;
+  tabIds: string[]; // к каким табам (категориям) привязана
+  action: 'none' | 'navigate';
+  targetScreenId: string | null;
+}
+
+// Таб-категория для inline search
+export interface SearchTab {
+  id: string;
+  text: string;
+}
+
 export interface InputProps {
   type: 'input';
   // Вид инпута
@@ -55,6 +74,10 @@ export interface InputProps {
     errorMessage: string; // Кастомный текст ошибки
     successMessage: string; // Кастомный текст успеха
   };
+  // Для search варианта
+  searchMode: 'dropdown' | 'inline'; // dropdown - выпадающий список, inline - в теле страницы
+  searchTabs: SearchTab[]; // категории для inline режима
+  searchCells: SearchCell[]; // ячейки результатов для inline режима
 }
 
 export interface SelectorProps {
@@ -87,6 +110,17 @@ export interface CellProps {
   infoValue: string;
   // Группа для radio (чтобы работали как группа)
   radioGroup: string;
+}
+
+// Tabs компонент (горизонтальный скролл табов)
+export interface TabsProps {
+  type: 'tabs';
+  items: {
+    id: string;
+    text: string;
+    visibleSlotIds: string[]; // какие слоты показывать когда этот таб активен
+  }[];
+  defaultTabIndex: number; // индекс таба активного по умолчанию
 }
 
 // Navbar компонент
@@ -128,6 +162,7 @@ export type ComponentProps =
   | SelectorProps 
   | ImageProps 
   | CellProps
+  | TabsProps
   | NavbarProps
   | CustomProps;
 
@@ -198,6 +233,11 @@ export const defaultComponentProps: Record<ComponentType, ComponentProps> = {
       errorMessage: 'Неверное значение',
       successMessage: 'Верно!',
     },
+    searchMode: 'dropdown',
+    searchTabs: [
+      { id: 'all', text: 'Все' },
+    ],
+    searchCells: [],
   },
   selector: {
     type: 'selector',
@@ -225,6 +265,14 @@ export const defaultComponentProps: Record<ComponentType, ComponentProps> = {
     infoValue: '',
     radioGroup: 'default',
     rightIcon: '',
+  },
+  tabs: {
+    type: 'tabs',
+    items: [
+      { id: '1', text: 'Таб 1', visibleSlotIds: [] },
+      { id: '2', text: 'Таб 2', visibleSlotIds: [] },
+    ],
+    defaultTabIndex: 0,
   },
   navbar: {
     type: 'navbar',

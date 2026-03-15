@@ -5,4 +5,5 @@ export { Input } from './Input';
 export { Selector } from './Selector';
 export { Image } from './Image';
 export { Cell } from './Cell';
+export { Tabs } from './Tabs';
 export { Navbar } from './Navbar';

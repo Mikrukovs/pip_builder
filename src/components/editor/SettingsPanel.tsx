@@ -9,6 +9,7 @@ import {
   SelectorSettings,
   ImageSettings,
   CellSettings,
+  TabsSettings,
   NavbarSettings,
   CustomSettings,
 } from './settings';
@@ -18,6 +19,7 @@ interface Props {
   config: ComponentProps;
   onChange: (props: Partial<ComponentProps>) => void;
   onRemove: () => void;
+  currentSlotId?: string;
 }
 
 const componentNames: Record<string, string> = {
@@ -28,11 +30,12 @@ const componentNames: Record<string, string> = {
   selector: 'Селектор',
   image: 'Изображение',
   cell: 'Ячейка',
+  tabs: 'Табы',
   navbar: 'Навбар',
   custom: 'Кастомный',
 };
 
-export function SettingsPanel({ config, onChange, onRemove }: Props) {
+export function SettingsPanel({ config, onChange, onRemove, currentSlotId }: Props) {
   const { getComponent } = useCustomComponentsStore();
   
   const getComponentName = () => {
@@ -59,6 +62,8 @@ export function SettingsPanel({ config, onChange, onRemove }: Props) {
         return <ImageSettings config={config} onChange={onChange} />;
       case 'cell':
         return <CellSettings config={config} onChange={onChange} />;
+      case 'tabs':
+        return <TabsSettings config={config} onChange={onChange} currentSlotId={currentSlotId || ''} />;
       case 'navbar':
         return <NavbarSettings config={config} onChange={onChange} />;
       case 'custom':

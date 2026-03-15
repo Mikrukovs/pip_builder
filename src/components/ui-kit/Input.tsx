@@ -7,13 +7,17 @@ import { useFormValidation } from '@/contexts/FormValidationContext';
 interface Props {
   config: InputProps;
   preview?: boolean;
+  onNavigate?: (screenId: string) => void;
 }
 
-export function Input({ config, preview }: Props) {
+export function Input({ config, preview, onNavigate }: Props) {
   const [value, setValue] = useState('');
   const [touched, setTouched] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [activeSearchTabId, setActiveSearchTabId] = useState<string | null>(
+    config.searchTabs?.[0]?.id || null
+  );
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement | HTMLButtonElement>(null);
   const inputId = useId();
@@ -184,12 +188,42 @@ export function Input({ config, preview }: Props) {
     </svg>
   );
 
-  // Фильтрованные опции для поиска
-  const filteredOptions = variant === 'search' && config.dropdownOptions
+  // Фильтрованные опции для поиска (dropdown режим)
+  const filteredOptions = variant === 'search' && config.searchMode !== 'inline' && config.dropdownOptions
     ? config.dropdownOptions.filter(opt => 
         opt.label.toLowerCase().includes(value.toLowerCase())
       )
     : config.dropdownOptions || [];
+
+  // Фильтрованные ячейки для inline режима
+  const getFilteredCells = () => {
+    if (variant !== 'search' || config.searchMode !== 'inline') return [];
+    
+    const cells = config.searchCells || [];
+    const searchQuery = value.toLowerCase().trim();
+    
+    return cells.filter(cell => {
+      // Фильтр по табу
+      if (activeSearchTabId && !cell.tabIds.includes(activeSearchTabId)) {
+        // Если таб "Все" (первый) — показываем всё
+        const isAllTab = config.searchTabs?.[0]?.id === activeSearchTabId;
+        if (!isAllTab) return false;
+      }
+      
+      // Фильтр по тексту
+      if (searchQuery) {
+        const matchesTitle = cell.title.toLowerCase().includes(searchQuery);
+        const matchesSubtitle = cell.subtitle.toLowerCase().includes(searchQuery);
+        return matchesTitle || matchesSubtitle;
+      }
+      
+      return true;
+    });
+  };
+
+  const filteredCells = getFilteredCells();
+  const isInlineSearch = variant === 'search' && config.searchMode === 'inline';
+  const searchTabs = config.searchTabs || [];
 
   return (
     <div className="w-full" ref={containerRef}>
@@ -249,8 +283,8 @@ export function Input({ config, preview }: Props) {
           </button>
         )}
 
-        {/* Dropdown list */}
-        {(variant === 'dropdown' || variant === 'search') && dropdownOpen && filteredOptions.length > 0 && (
+        {/* Dropdown list (только для dropdown режима) */}
+        {(variant === 'dropdown' || (variant === 'search' && config.searchMode !== 'inline')) && dropdownOpen && filteredOptions.length > 0 && (
           <div className="absolute left-0 right-0 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-48 overflow-y-auto">
             {filteredOptions.map((option) => (
               <button
@@ -266,6 +300,92 @@ export function Input({ config, preview }: Props) {
           </div>
         )}
       </div>
+
+      {/* Inline search: табы и результаты */}
+      {isInlineSearch && (
+        <div className="mt-3">
+          {/* Табы-категории */}
+          {searchTabs.length > 1 && (
+            <div className="overflow-x-auto scrollbar-hide mb-3">
+              <div className="flex gap-2 min-w-max">
+                {searchTabs.map((tab) => {
+                  const isActive = activeSearchTabId === tab.id;
+                  return (
+                    <button
+                      key={tab.id}
+                      type="button"
+                      onClick={() => preview && setActiveSearchTabId(tab.id)}
+                      className={`
+                        px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap
+                        transition-all duration-150
+                        ${isActive
+                          ? 'bg-gray-900 text-white'
+                          : 'bg-white text-gray-700 border border-gray-300 hover:border-gray-400'
+                        }
+                      `}
+                    >
+                      {tab.text}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Результаты (ячейки) */}
+          <div className="space-y-2">
+            {filteredCells.length > 0 ? (
+              filteredCells.map((cell) => (
+                <button
+                  key={cell.id}
+                  type="button"
+                  onClick={() => {
+                    if (preview && cell.action === 'navigate' && cell.targetScreenId && onNavigate) {
+                      onNavigate(cell.targetScreenId);
+                    }
+                  }}
+                  className="w-full flex items-center gap-3 p-3 bg-white rounded-lg border border-gray-200 
+                             hover:border-gray-300 transition-colors text-left"
+                >
+                  {/* Иконка */}
+                  {cell.icon ? (
+                    <img
+                      src={cell.icon}
+                      alt=""
+                      className="w-10 h-10 rounded-lg object-cover flex-shrink-0"
+                    />
+                  ) : (
+                    <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0">
+                      <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                      </svg>
+                    </div>
+                  )}
+                  
+                  {/* Текст */}
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-gray-900 truncate">{cell.title}</p>
+                    {cell.showSubtitle && cell.subtitle && (
+                      <p className="text-sm text-gray-500 truncate">{cell.subtitle}</p>
+                    )}
+                  </div>
+
+                  {/* Стрелка навигации */}
+                  {cell.action === 'navigate' && (
+                    <svg className="w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  )}
+                </button>
+              ))
+            ) : value ? (
+              <div className="text-center py-6 text-gray-500">
+                <p>Ничего не найдено</p>
+              </div>
+            ) : null}
+          </div>
+        </div>
+      )}
 
       {descriptorText && (
         <p className={`mt-1 text-sm ${

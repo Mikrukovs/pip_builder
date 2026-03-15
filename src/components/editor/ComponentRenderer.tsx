@@ -1,7 +1,7 @@
 'use client';
 
 import { ComponentProps } from '@/types';
-import { Heading, Text, Button, Input, Selector, Image, Cell, Navbar } from '@/components/ui-kit';
+import { Heading, Text, Button, Input, Selector, Image, Cell, Tabs, Navbar } from '@/components/ui-kit';
 import { CustomComponentRenderer } from './CustomComponentRenderer';
 import { useCustomComponentsStore } from '@/store/custom-components';
 import { CustomComponentDefinition } from '@/types/custom-components';
@@ -11,11 +11,14 @@ interface Props {
   preview?: boolean;
   onNavigate?: (screenId: string) => void;
   onBack?: () => void;
+  // Для табов
+  activeTabId?: string | null;
+  onTabChange?: (tabId: string) => void;
   // Встроенные кастомные компоненты (для preview на других устройствах)
   embeddedComponents?: Record<string, unknown>[];
 }
 
-export function ComponentRenderer({ config, preview = false, onNavigate, onBack, embeddedComponents }: Props) {
+export function ComponentRenderer({ config, preview = false, onNavigate, onBack, activeTabId, onTabChange, embeddedComponents }: Props) {
   const { getComponent } = useCustomComponentsStore();
 
   switch (config.type) {
@@ -26,13 +29,15 @@ export function ComponentRenderer({ config, preview = false, onNavigate, onBack,
     case 'button':
       return <Button config={config} preview={preview} onNavigate={onNavigate} />;
     case 'input':
-      return <Input config={config} preview={preview} />;
+      return <Input config={config} preview={preview} onNavigate={onNavigate} />;
     case 'selector':
       return <Selector config={config} preview={preview} />;
     case 'image':
       return <Image config={config} preview={preview} />;
     case 'cell':
       return <Cell config={config} preview={preview} onNavigate={onNavigate} />;
+    case 'tabs':
+      return <Tabs config={config} preview={preview} activeTabId={activeTabId} onTabChange={onTabChange} />;
     case 'navbar':
       return (
         <Navbar 

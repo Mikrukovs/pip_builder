@@ -2,7 +2,7 @@
 
 import { useSearchParams } from 'next/navigation';
 import { useEffect, useState, useRef, Suspense, useCallback } from 'react';
-import { Project, Screen } from '@/types';
+import { Project, Screen, TabsProps } from '@/types';
 import { ComponentRenderer } from '@/components/editor/ComponentRenderer';
 import { useAnalytics } from '@/hooks/useAnalytics';
 import { FormValidationProvider } from '@/contexts/FormValidationContext';
@@ -14,6 +14,7 @@ function PreviewContent() {
   const [showUpload, setShowUpload] = useState(false);
   const [navigationHistory, setNavigationHistory] = useState<string[]>([]);
   const [shareId, setShareId] = useState<string | null>(null);
+  const [activeTabId, setActiveTabId] = useState<string | null>(null);
   
   // Хуки для sticky секции - должны быть до любых условных return
   const stickyRef = useRef<HTMLDivElement>(null);
@@ -123,6 +124,7 @@ function PreviewContent() {
       setNavigationHistory(prev => [...prev, currentScreenId]);
     }
     setCurrentScreenId(screenId);
+    setActiveTabId(null); // Сбрасываем активный таб при переходе на другую страницу
   }, [currentScreenId]);
 
   const handleBack = useCallback(() => {
@@ -135,6 +137,10 @@ function PreviewContent() {
       setCurrentScreenId(previousScreen);
     }
   }, [navigationHistory]);
+
+  const handleTabChange = useCallback((tabId: string) => {
+    setActiveTabId(tabId);
+  }, []);
 
   // Обработчик кликов для аналитики
   const handleContentClick = useCallback((event: React.MouseEvent) => {
@@ -217,7 +223,40 @@ function PreviewContent() {
 
   // Находим навбар среди компонентов (рендерим его отдельно сверху)
   const navbarSlot = currentScreen.slots.find(slot => slot.component?.type === 'navbar');
-  const otherSlots = currentScreen.slots.filter(slot => slot.component?.type !== 'navbar');
+  
+  // Находим табы
+  const tabsSlot = currentScreen.slots.find(slot => slot.component?.type === 'tabs');
+  const tabsConfig = tabsSlot?.component as TabsProps | undefined;
+  
+  // Определяем активный таб (если есть табы на странице)
+  const currentActiveTabId = activeTabId || tabsConfig?.items[tabsConfig.defaultTabIndex]?.id || null;
+  
+  // Получаем список slotId которые должны быть видимы для активного таба
+  const activeTabItem = tabsConfig?.items.find(item => item.id === currentActiveTabId);
+  const visibleSlotIds = activeTabItem?.visibleSlotIds || [];
+  
+  // Собираем все slotIds которые привязаны хотя бы к одному табу
+  const allBoundSlotIds = new Set<string>();
+  tabsConfig?.items.forEach(item => {
+    item.visibleSlotIds.forEach(id => allBoundSlotIds.add(id));
+  });
+  
+  // Фильтруем слоты:
+  // - Навбар рендерим отдельно
+  // - Табы рендерим всегда (они не привязываются к себе)
+  // - Слоты без привязки к табам показываем всегда
+  // - Слоты с привязкой показываем только если они в visibleSlotIds активного таба
+  const otherSlots = currentScreen.slots.filter(slot => {
+    if (slot.component?.type === 'navbar') return false;
+    if (slot.component?.type === 'tabs') return true; // Табы всегда видны
+    
+    // Если слот не привязан ни к одному табу - показываем всегда
+    if (!allBoundSlotIds.has(slot.id)) return true;
+    
+    // Если есть привязка - показываем только если в активном табе
+    return visibleSlotIds.includes(slot.id);
+  });
+  
   const hasNavbar = !!navbarSlot?.component;
 
   return (
@@ -264,6 +303,8 @@ function PreviewContent() {
                     preview 
                     onNavigate={handleNavigate}
                     onBack={handleBack}
+                    activeTabId={currentActiveTabId}
+                    onTabChange={handleTabChange}
                     embeddedComponents={embeddedComponents}
                   />
                 </div>

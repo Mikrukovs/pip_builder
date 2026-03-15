@@ -1,7 +1,9 @@
 'use client';
 
-import { InputProps } from '@/types';
+import { InputProps, SearchCell, SearchTab } from '@/types';
 import { useState } from 'react';
+import { useEditorStore } from '@/store/editor';
+import { v4 as uuidv4 } from 'uuid';
 
 interface Props {
   config: InputProps;
@@ -48,6 +50,8 @@ const inputVariants = [
 
 export function InputSettings({ config, onChange }: Props) {
   const [variantDropdownOpen, setVariantDropdownOpen] = useState(false);
+  const [expandedCellId, setExpandedCellId] = useState<string | null>(null);
+  const { project } = useEditorStore();
 
   const updateValidation = (updates: Partial<InputProps['validation']>) => {
     onChange({
@@ -78,6 +82,86 @@ export function InputSettings({ config, onChange }: Props) {
   const removeDropdownOption = (id: string) => {
     const newOptions = (config.dropdownOptions || []).filter(opt => opt.id !== id);
     onChange({ dropdownOptions: newOptions });
+  };
+
+  // === Inline Search: Табы ===
+  const searchTabs = config.searchTabs || [];
+  const searchCells = config.searchCells || [];
+  const searchMode = config.searchMode || 'dropdown';
+
+  const addSearchTab = () => {
+    if (searchTabs.length >= 10) return;
+    const newTabs: SearchTab[] = [
+      ...searchTabs,
+      { id: uuidv4(), text: `Категория ${searchTabs.length + 1}` }
+    ];
+    onChange({ searchTabs: newTabs });
+  };
+
+  const updateSearchTab = (id: string, text: string) => {
+    const newTabs = searchTabs.map(tab => 
+      tab.id === id ? { ...tab, text } : tab
+    );
+    onChange({ searchTabs: newTabs });
+  };
+
+  const removeSearchTab = (id: string) => {
+    if (searchTabs.length <= 1) return;
+    const newTabs = searchTabs.filter(tab => tab.id !== id);
+    // Удаляем этот таб из всех ячеек
+    const newCells = searchCells.map(cell => ({
+      ...cell,
+      tabIds: cell.tabIds.filter(tabId => tabId !== id)
+    }));
+    onChange({ searchTabs: newTabs, searchCells: newCells });
+  };
+
+  // === Inline Search: Ячейки ===
+  const addSearchCell = () => {
+    const newCell: SearchCell = {
+      id: uuidv4(),
+      icon: '',
+      title: `Результат ${searchCells.length + 1}`,
+      subtitle: 'Описание',
+      showSubtitle: true,
+      tabIds: searchTabs.length > 0 ? [searchTabs[0].id] : [],
+      action: 'none',
+      targetScreenId: null,
+    };
+    onChange({ searchCells: [...searchCells, newCell] });
+    setExpandedCellId(newCell.id);
+  };
+
+  const updateSearchCell = (id: string, updates: Partial<SearchCell>) => {
+    const newCells = searchCells.map(cell =>
+      cell.id === id ? { ...cell, ...updates } : cell
+    );
+    onChange({ searchCells: newCells });
+  };
+
+  const removeSearchCell = (id: string) => {
+    onChange({ searchCells: searchCells.filter(cell => cell.id !== id) });
+    if (expandedCellId === id) setExpandedCellId(null);
+  };
+
+  const handleCellIconUpload = (cellId: string, file: File) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      updateSearchCell(cellId, { icon: reader.result as string });
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const toggleCellTab = (cellId: string, tabId: string) => {
+    const cell = searchCells.find(c => c.id === cellId);
+    if (!cell) return;
+    
+    const hasTab = cell.tabIds.includes(tabId);
+    const newTabIds = hasTab
+      ? cell.tabIds.filter(id => id !== tabId)
+      : [...cell.tabIds, tabId];
+    
+    updateSearchCell(cellId, { tabIds: newTabIds });
   };
 
   return (
@@ -224,8 +308,39 @@ export function InputSettings({ config, onChange }: Props) {
         </div>
       )}
 
-      {/* Опции для dropdown и search */}
-      {(currentVariant === 'dropdown' || currentVariant === 'search') && (
+      {/* Режим поиска - только для search варианта */}
+      {currentVariant === 'search' && (
+        <div className="pt-2 border-t border-gray-200">
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Режим результатов
+          </label>
+          <div className="flex gap-2">
+            <button
+              onClick={() => onChange({ searchMode: 'dropdown' })}
+              className={`flex-1 px-3 py-2 rounded-lg border text-sm transition-colors ${
+                searchMode === 'dropdown'
+                  ? 'border-blue-500 bg-blue-50 text-blue-700'
+                  : 'border-gray-300 hover:border-gray-400'
+              }`}
+            >
+              Dropdown
+            </button>
+            <button
+              onClick={() => onChange({ searchMode: 'inline' })}
+              className={`flex-1 px-3 py-2 rounded-lg border text-sm transition-colors ${
+                searchMode === 'inline'
+                  ? 'border-blue-500 bg-blue-50 text-blue-700'
+                  : 'border-gray-300 hover:border-gray-400'
+              }`}
+            >
+              На странице
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Опции для dropdown режима */}
+      {(currentVariant === 'dropdown' || (currentVariant === 'search' && searchMode === 'dropdown')) && (
         <div className="pt-2 border-t border-gray-200">
           <div className="flex items-center justify-between mb-2">
             <label className="text-sm font-medium text-gray-700">
@@ -261,6 +376,273 @@ export function InputSettings({ config, onChange }: Props) {
             {(!config.dropdownOptions || config.dropdownOptions.length === 0) && (
               <p className="text-xs text-gray-400 text-center py-2">
                 Нет опций. Добавьте первую.
+              </p>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Inline Search: Табы (категории) */}
+      {currentVariant === 'search' && searchMode === 'inline' && (
+        <div className="pt-2 border-t border-gray-200">
+          <div className="flex items-center justify-between mb-2">
+            <label className="text-sm font-medium text-gray-700">
+              Категории ({searchTabs.length}/10)
+            </label>
+            <button
+              onClick={addSearchTab}
+              disabled={searchTabs.length >= 10}
+              className="text-sm text-blue-600 hover:text-blue-700 font-medium disabled:opacity-50"
+            >
+              + Добавить
+            </button>
+          </div>
+          <div className="space-y-2">
+            {searchTabs.map((tab, index) => (
+              <div key={tab.id} className="flex items-center gap-2">
+                <span className="text-xs text-gray-400 w-5">{index + 1}.</span>
+                <input
+                  type="text"
+                  value={tab.text}
+                  onChange={(e) => updateSearchTab(tab.id, e.target.value)}
+                  className="flex-1 px-3 py-1.5 text-sm rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+                {searchTabs.length > 1 && (
+                  <button
+                    onClick={() => removeSearchTab(tab.id)}
+                    className="p-1 text-gray-400 hover:text-red-500 transition-colors"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+          <p className="text-xs text-gray-400 mt-2">
+            Первая категория считается &quot;Все&quot; — показывает все ячейки
+          </p>
+        </div>
+      )}
+
+      {/* Inline Search: Ячейки результатов */}
+      {currentVariant === 'search' && searchMode === 'inline' && (
+        <div className="pt-2 border-t border-gray-200">
+          <div className="flex items-center justify-between mb-2">
+            <label className="text-sm font-medium text-gray-700">
+              Результаты поиска ({searchCells.length})
+            </label>
+            <button
+              onClick={addSearchCell}
+              className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+            >
+              + Добавить
+            </button>
+          </div>
+
+          <div className="space-y-2">
+            {searchCells.map((cell) => (
+              <div key={cell.id} className="border border-gray-200 rounded-lg overflow-hidden">
+                {/* Заголовок ячейки */}
+                <div
+                  className={`flex items-center gap-2 p-2 cursor-pointer transition-colors ${
+                    expandedCellId === cell.id ? 'bg-blue-50' : 'bg-gray-50 hover:bg-gray-100'
+                  }`}
+                  onClick={() => setExpandedCellId(expandedCellId === cell.id ? null : cell.id)}
+                >
+                  <svg
+                    className={`w-4 h-4 text-gray-500 transition-transform ${expandedCellId === cell.id ? 'rotate-90' : ''}`}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+
+                  {cell.icon ? (
+                    <img src={cell.icon} alt="" className="w-6 h-6 rounded object-cover" />
+                  ) : (
+                    <div className="w-6 h-6 rounded bg-gray-200 flex items-center justify-center">
+                      <svg className="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                      </svg>
+                    </div>
+                  )}
+
+                  <span className="flex-1 text-sm font-medium text-gray-900 truncate">{cell.title}</span>
+
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      removeSearchCell(cell.id);
+                    }}
+                    className="p-1 rounded hover:bg-red-100 transition-colors"
+                  >
+                    <svg className="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+
+                {/* Развёрнутые настройки ячейки */}
+                {expandedCellId === cell.id && (
+                  <div className="p-3 border-t border-gray-200 bg-white space-y-3">
+                    {/* Иконка */}
+                    <div>
+                      <label className="block text-xs text-gray-600 mb-1">Иконка</label>
+                      <div className="flex items-center gap-2">
+                        {cell.icon ? (
+                          <div className="relative">
+                            <img src={cell.icon} alt="" className="w-10 h-10 rounded-lg object-cover" />
+                            <button
+                              onClick={() => updateSearchCell(cell.id, { icon: '' })}
+                              className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white rounded-full flex items-center justify-center"
+                            >
+                              <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                              </svg>
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => {
+                              const input = document.createElement('input');
+                              input.type = 'file';
+                              input.accept = 'image/*';
+                              input.onchange = (e) => {
+                                const file = (e.target as HTMLInputElement).files?.[0];
+                                if (file) handleCellIconUpload(cell.id, file);
+                              };
+                              input.click();
+                            }}
+                            className="w-10 h-10 rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center hover:border-blue-500 transition-colors"
+                          >
+                            <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                            </svg>
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Заголовок */}
+                    <div>
+                      <label className="block text-xs text-gray-600 mb-1">Заголовок</label>
+                      <input
+                        type="text"
+                        value={cell.title}
+                        onChange={(e) => updateSearchCell(cell.id, { title: e.target.value })}
+                        className="w-full px-2 py-1.5 text-sm rounded border border-gray-300 focus:ring-1 focus:ring-blue-500"
+                      />
+                    </div>
+
+                    {/* Подзаголовок */}
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs text-gray-600">Подзаголовок</label>
+                      <button
+                        onClick={() => updateSearchCell(cell.id, { showSubtitle: !cell.showSubtitle })}
+                        className={`relative w-9 h-5 rounded-full transition-colors ${
+                          cell.showSubtitle ? 'bg-blue-600' : 'bg-gray-300'
+                        }`}
+                      >
+                        <span
+                          className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform ${
+                            cell.showSubtitle ? 'translate-x-4' : ''
+                          }`}
+                        />
+                      </button>
+                    </div>
+                    {cell.showSubtitle && (
+                      <input
+                        type="text"
+                        value={cell.subtitle}
+                        onChange={(e) => updateSearchCell(cell.id, { subtitle: e.target.value })}
+                        className="w-full px-2 py-1.5 text-sm rounded border border-gray-300 focus:ring-1 focus:ring-blue-500"
+                      />
+                    )}
+
+                    {/* Категории */}
+                    {searchTabs.length > 1 && (
+                      <div>
+                        <label className="block text-xs text-gray-600 mb-1">Категории</label>
+                        <div className="flex flex-wrap gap-1">
+                          {searchTabs.slice(1).map((tab) => {
+                            const isSelected = cell.tabIds.includes(tab.id);
+                            return (
+                              <button
+                                key={tab.id}
+                                onClick={() => toggleCellTab(cell.id, tab.id)}
+                                className={`px-2 py-1 text-xs rounded-full transition-colors ${
+                                  isSelected
+                                    ? 'bg-blue-600 text-white'
+                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                }`}
+                              >
+                                {tab.text}
+                              </button>
+                            );
+                          })}
+                        </div>
+                        <p className="text-xs text-gray-400 mt-1">
+                          Без категории — в &quot;{searchTabs[0]?.text || 'Все'}&quot;
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Действие */}
+                    <div>
+                      <label className="block text-xs text-gray-600 mb-1">При нажатии</label>
+                      <div className="flex gap-1">
+                        <button
+                          onClick={() => updateSearchCell(cell.id, { action: 'none', targetScreenId: null })}
+                          className={`flex-1 px-2 py-1 text-xs rounded transition-colors ${
+                            cell.action === 'none'
+                              ? 'bg-blue-600 text-white'
+                              : 'bg-gray-100 text-gray-600'
+                          }`}
+                        >
+                          Ничего
+                        </button>
+                        <button
+                          onClick={() => updateSearchCell(cell.id, { action: 'navigate' })}
+                          className={`flex-1 px-2 py-1 text-xs rounded transition-colors ${
+                            cell.action === 'navigate'
+                              ? 'bg-blue-600 text-white'
+                              : 'bg-gray-100 text-gray-600'
+                          }`}
+                        >
+                          Переход
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Выбор страницы */}
+                    {cell.action === 'navigate' && project?.screens && (
+                      <div>
+                        <label className="block text-xs text-gray-600 mb-1">Страница</label>
+                        <select
+                          value={cell.targetScreenId || ''}
+                          onChange={(e) => updateSearchCell(cell.id, { targetScreenId: e.target.value || null })}
+                          className="w-full px-2 py-1.5 text-sm rounded border border-gray-300 focus:ring-1 focus:ring-blue-500"
+                        >
+                          <option value="">Выберите страницу</option>
+                          {project.screens.map((screen) => (
+                            <option key={screen.id} value={screen.id}>
+                              {screen.name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            ))}
+
+            {searchCells.length === 0 && (
+              <p className="text-xs text-gray-400 text-center py-3">
+                Добавьте результаты поиска
               </p>
             )}
           </div>

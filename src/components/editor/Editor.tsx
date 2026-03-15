@@ -335,6 +335,7 @@ export function Editor({ projectId }: EditorProps) {
               config={selectedSlot.component}
               onChange={(props) => updateComponent(selectedSlotId!, props)}
               onRemove={() => removeComponentFromSlot(selectedSlotId!)}
+              currentSlotId={selectedSlotId || undefined}
             />
           )}
         </div>
@@ -368,7 +369,7 @@ export function Editor({ projectId }: EditorProps) {
               </button>
             </div>
             
-            {/* Ссылка для этого браузера */}
+            {/*   лка для этого браузера */}
             <div className="mb-4">
               <p className="text-sm text-gray-600 mb-2">
                 Ссылка для этого браузера:
