@@ -203,9 +203,9 @@ export function HeatmapExport({ analytics, screen, screenName, onClose, embedded
             {/* Зона: Основной контент — обёртка для всей области (включая пустое пространство) */}
             <div className="relative flex-1">
               {/* Компоненты контента */}
-              <div 
-                ref={contentRef} 
-                className="px-4 py-6 space-y-4"
+              <div
+                ref={contentRef}
+                className="px-4 py-6 space-y-2"
               >
                 {otherSlots.map((slot: Slot) => (
                   slot.component && (

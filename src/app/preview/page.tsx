@@ -291,9 +291,9 @@ function PreviewContent() {
           }}
         >
           {/* Основной контент - data-zone здесь для точных координат */}
-          <div 
+          <div
             data-zone="content"
-            className="px-4 py-6 space-y-4"
+            className="px-4 py-6 space-y-2"
           >
             {otherSlots.map((slot) => (
               slot.component && (
